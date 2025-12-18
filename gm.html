@@ -1,0 +1,3135 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>MMO RPG Avançado</title>
+  <link rel="icon" href="bigorna.jpeg.png" type="image/x-icon">
+  <style>
+  :root {
+  --transition-fast: 0.2s ease;
+  --hp-height: 6px;
+  --hp-bg: #222;
+}
+body {
+  margin: 0;
+  color: white;
+  font-family: 'Segoe UI', sans-serif;
+  cursor: crosshair;
+  overflow: hidden;
+  height: 100%;
+}
+.game-container {
+  width: 0vw;
+  height: 0vh;
+  overflow: hidden;
+  position: relative;
+}
+.map-content { 
+  width: 1260px;
+  height: 1260px;
+  position: relative; 
+}
+.map {
+  grid-area: map;
+  background-color: #111;
+  display: flex;
+  align-items: center;
+  position: relative; 
+  overflow: hidden; /*Alterar para 'auto' caso necessario a rolagem para teste*/
+}
+.character, .enemy, .lobisomem, .obstacle, .tile {
+  width: 40px; height: 40px; /*Alterar caso necessario retirar as Linhas dos Tiles*/
+  position: absolute;
+  transform: translate(-50%, -50%);
+  transition: top 0.3s ease, left 0.3s ease, opacity var(--transition-fast);
+}
+.character {
+  background-size: cover;
+  z-index: 1000;
+  transition: left -20.2s ease, top -20.2s ease, transform 0.2s ease; /* 🌟 Suaviza o movimento (Camera) */
+}
+.character.down  { background-image: url('player_down.jpeg.png'); }
+.character.up    { background-image: url('player_up.jpeg.png'); }
+.character.left  { background-image: url('player_left.jpeg.png'); }
+.character.right { background-image: url('player_right.jpeg.png'); }
+.character.walk-down  { background-image: url('player_down_move.jpeg.gif'); }
+.character.walk-up    { background-image: url('player_up_move.jpeg.gif'); }
+.character.walk-left  { background-image: url('player_left_move.jpeg.gif'); }
+.character.walk-right { background-image: url('player_right_move.jpeg.gif'); }
+.character-name {
+  position: absolute;
+  bottom: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 0 0 3px #000;
+  z-index: 1000;
+  white-space: nowrap;
+}
+.character-hp, .enemy-hp, .lobisomem-hp {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: var(--hp-height);
+  background-color: var(--hp-bg);
+  border-radius: 3px;
+  overflow: hidden;
+  z-index: 100;
+}
+.character-hp-bar, .enemy-hp-bar {
+  height: 100%;
+  background-color: limegreen;
+  width: 100%;
+  transition: width var(--transition-fast);
+}
+.item, .slot, #editor-panel button {
+  background-color: #444;
+  border-radius: 4px;
+  color: #fff;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+.item {
+  padding: 8px;
+  margin: 5px 0;
+}
+.item:hover, .slot:hover, #editor-panel button:hover {
+  background-color: #666;
+}
+.chat {
+  background-color: #333;
+  padding: 5px;
+  margin-top: 10px;
+  height: 100px;
+  overflow-y: auto;
+  font-size: 12px;
+  border-radius: 5px;
+}
+.chat input {
+  width: 100%;
+  padding: 5px;
+  margin-top: 5px;
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+}
+#editor-panel {
+  display: none;
+  position: absolute;
+  top: 100px;
+  left: 100px;
+  background: #222;
+  border: 2px solid #555;
+  padding: 10px;
+  z-index: 1000;
+  color: #fff;
+  opacity: 0.85;
+}
+.editor-section {
+  margin-bottom: 15px;
+  border-top: 1px solid #555;
+  padding-top: 10px;
+}
+.editor-section h4 {
+  margin: 5px 0;
+  font-size: 14px;
+  color: #ccc;
+}
+/* ==== [ TILES ] ==== */
+/* ==== [ NOTA - Adicionar 2 Clicks para player permitir rolagem ] ==== */
+.tile             { background-size: cover; transition: filter 1s ease; }
+.tile.water       { background-image: url('water.jpeg.png'); }
+.tile.deepwater   { background-image: url('deepwater.jpeg.png'); }
+.tile.sand        { background-image: url('sand.jpeg.png');  }
+.tile.smoothstone { background-image: url('smoothstone.jpeg.png'); }
+.tile.grass       { background-image: url('grass.jpeg.png'); }
+.tile.dirt        { background-image: url('dirt.jpeg.png'); }
+.tile.snow        { background-image: url('snow.jpeg.png'); }
+.tile.wood        { background-image: url('wood.jpeg.png'); }
+/* ==== [ TILES SEM PNG ] ==== */
+.tile.caverna     { background-color: #252525; }
+.tile.lava        { background-color: #ff4500; }
+.tile.drygrass    { background-color: #cac700; }
+.tile.blackstone  { background-color: #333333; }
+/* ==== [ OBSTACLES ] ==== */
+.obstacle                   { background-image: url('obstacle.jpeg.png'); position: absolute; background-size: contain; }
+.obstacle.tree              { background-image: url('arvore.jpeg.png'); z-index: 100; }
+.obstacle.largetree         { background-image: url('largetree.jpeg.png'); z-index: 1001; }
+.obstacle.cacto             { background-image: url('cacto.jpeg.png'); }
+.obstacle.rock              { background-image: url('rock.jpeg.png'); }
+.obstacle.poppy             { background-image: url('poppys.jpeg.png'); }
+.obstacle.plank             { background-image: url('plank.jpeg.png'); }
+.obstacle.fogueira          { background-image: url('campfire.jpeg.gif'); }
+.obstacle.bigorna           { background-image: url('bigorna.jpeg.png'); }
+.obstacle.jarro             { background-image: url('jarro.jpeg.png'); }
+.obstacle.estande_de_livros { background-image: url('estande_de_livros.jpeg.png'); }
+.obstacle.caldeirao         { background-image: url('caldeirao.jpeg.png'); }
+.obstacle.porta             { background-image: url('porta.jpeg.png'); }
+.obstacle.bau               { background-image: url('bau.jpeg.png'); }
+.obstacle.banner            { background-image: url('banner.jpeg.png'); }
+.obstacle.fornalha          { background-image: url('fornalha.jpeg.png'); }
+.obstacle.bancada           { background-image: url('bancada.jpeg.png'); }
+/* ==== [ ENTITYS ] ==== */
+.enemy           { background-size: cover; z-index: 999; border-radius: 4px; }
+.enemy.vaca      { background-image: url('cow.jpeg.gif'); }
+.enemy.lagosta   { background-image: url('lagosta.jpeg.gif'); }
+.enemy.zumbi     { background-image: url('zumbi.jpeg.gif'); }
+.enemy.lobisomem { background-image: url('lobisomem.jpeg.png'); }
+.enemy.grifo     { background-image: url('grifo.jpeg.png'); }
+.enemy.lobisomem, .enemy.grifo, .obstacle.largetree {
+  width: 60px;
+  height: 60px;
+  transform: translate(-30px, -40px);
+}
+#boss-hud {
+  position: fixed;
+  top: 7%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60%;
+  height: 30px;
+  background-color: #300;
+  border: 2px solid #900;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 20px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #fff;
+  z-index: 1000;
+  border-radius: 8px;
+  box-shadow: 0 0 10px #900;
+  opacity: 0.9;
+  z-index: 100;
+}
+.slot {
+  border: 1px solid #666;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+.slot:hover {
+background-color: #666;
+}
+#settings-button {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 48px;
+  height: 48px;
+  background-image: url('backpack_close.jpeg.png');
+  background-size: cover;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  z-index: 1000;
+}
+#settings-panel {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #222;
+  border: 2px solid #555;
+  padding: 10px;
+  z-index: 1000;
+  color: #fff;
+  opacity: 0.85;
+}
+.settings-section {
+  margin-bottom: 15px;
+  border-top: 1px solid #555;
+  padding-top: 10px;
+}
+#potion-button,
+#canteen-button {
+  position: fixed;
+  bottom: 20px;
+  background-color: #333;
+  color: white;
+  border: 2px solid #555;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  z-index: 1000;
+  transition: background-color 0.2s ease;
+  opacity: 0.7;
+}
+#potion-button  { left: 80px; }
+#canteen-button { left: 200px; }
+#potion-button:hover,
+#canteen-button:hover { background-color: #555; }
+#fixed-status-bars {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+#fixed-status-bars > div {
+  font-size: 12px;
+  color: white;
+  text-shadow: 0 0 4px black;
+}
+.bar {
+  width: 120px;
+  height: 6px;
+  background: #444;
+  border-radius: 3px;
+  overflow: hidden;
+  box-shadow: 0 0 6px #000;
+}
+.status-bar {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+#characterHpBar { background: limegreen; }
+#hunger-bar     { background: orange; }
+#thirst-bar     { background: deepskyblue; }
+#toggle-chat-button {
+  position: fixed;
+  top: 0px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #333;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  z-index: 1000;
+  transition: background-color 0.2s ease;
+  opacity: 0.8;
+}
+#toggle-chat-button:hover {
+  background-color: #555;
+}
+#mission-button {
+  position: fixed;
+  top: 0px;
+  left: calc(50% - 60px); /* desloca para a esquerda do botão de chat */
+  transform: translateX(-50%);
+  background-color: #333;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  z-index: 1000;
+  transition: background-color 0.2s ease;
+  opacity: 0.8;
+}
+#mission-button:hover {
+  background-color: #555;
+}
+body, .map, .chat, #chat-box {
+  scrollbar-width: none;     /* Firefox */
+  -ms-overflow-style: none;  /* Internet Explorer */
+}
+.slot.selected {
+  border: 2px solid limegreen;
+  box-shadow: 0 0 6px limegreen;
+}
+.quick-slot {
+  width: 50px;
+  height: 50px;
+  background-color: #444;
+  border: 1px solid #666;
+  border-radius: 6px;
+  font-size: 24px;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#rain-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 998;
+  overflow: hidden;
+}
+.raindrop {
+  position: absolute;
+  width: 3px;
+  height: 30px;
+  background: rgba(135, 204, 230, 0.8);
+  animation-name: fall;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+@keyframes fall {
+  0% { transform: translateY(0); opacity: 1; }
+  100% { transform: translateY(100vh); opacity: 0; }
+}
+#extra-settings-button {
+  position: fixed;
+  top: 0px;
+  left: calc(50% + 60px); /* deslocado à direita do botão de chat */
+  transform: translateX(-50%);
+  background-color: #333;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  z-index: 1000;
+  transition: background-color 0.2s ease;
+  opacity: 0.8;
+}
+#extra-settings-button:hover {
+  background-color: #555;
+}
+#respawn-screen, #main-menu {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  display: flex; justify-content: center; align-items: center;
+}
+#respawn-screen { background-color: rgba(0,0,0,0.85); z-index: 2000; }
+#main-menu { background-image: url('sand.jpeg.png'); z-index: 3000; }
+.respawn-overlay, .menu-overlay {
+  background: #222; border: 2px solid #555;
+  border-radius: 12px; text-align: center; color: white;
+}
+.menu-overlay { padding: 40px; box-shadow: 0 0 20px #000; }
+.menu-overlay h1 { font-size: 32px; margin-bottom: 30px; }
+.respawn-overlay { padding: 30px; box-shadow: 0 0 20px red; }
+.respawn-overlay button, .menu-overlay button {
+  display: block; margin: 10px auto; background: #333; color: white;
+  border: 2px solid #555; border-radius: 8px; cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+.respawn-overlay button { padding: 10px 20px; font-size: 16px; }
+.respawn-overlay button:hover, .menu-overlay button:hover { background: #555; }
+.menu-overlay button { padding: 12px 24px; font-size: 18px; }
+#hand-buttons {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 1000;
+}
+#hand-buttons button {
+  background-color: #333;
+  color: white;
+  border: 2px solid #555;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  opacity: 0.8;
+}
+#hand-buttons button:hover {
+  background-color: #555;
+}
+#missions-screen {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.85);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 2500;
+}
+.missions-overlay {
+  background: #222;
+  border: 2px solid #555;
+  border-radius: 12px;
+  text-align: center;
+  color: white;
+  padding: 40px;
+  box-shadow: 0 0 20px #000;
+  width: 60%;
+  max-height: 70%;
+  overflow-y: auto;
+}
+.menu-btn {
+  width: 260px;
+  margin: 12px 0;
+  cursor: pointer;
+  transition: transform 0.2s ease, filter 0.2s ease;
+  user-select: none;
+}
+.menu-btn:hover { transform: scale(1.05); filter: brightness(1.2); }
+.menu-btn:active { transform: scale(0.97); }
+</style>
+</head>
+<body>
+  <div id="hand-buttons">
+  <button onclick="setMainHand('right')">🖐️</button>
+  <button onclick="setMainHand('left')">🤚</button>
+</div>
+  <div id="main-menu">
+  <div class="menu-overlay">
+    <h1>🎮 MMO RPG Avançado</h1>
+    <img src="button_jogar.jpeg.png" class="menu-btn" onclick="startGame()">
+    <img src="button_config.jpeg.png" class="menu-btn" onclick="openSettings()">
+    <img src="button_sair.jpeg.png" class="menu-btn" onclick="exitGame()">
+  </div>
+</div>
+<!-- Tela de Criação de Mundo -->
+<div id="nickname-screen" style="display: none; position: fixed; top: 0; left: 0; 
+  width: 100%; height: 100%; background: #111; color: white; 
+  display: flex; justify-content: center; align-items: center; z-index: 2000;">
+  <div style="background: #222; padding: 30px; border-radius: 12px; 
+    border: 2px solid #555; box-shadow: 0 0 20px rgb(255, 196, 0); 
+    text-align: center; width: 720px; max-width: 95%;">
+    <h2>🌍 Painel de Criação de Mundo</h2>
+    <!-- Seção: Jogador -->
+    <section style="margin-bottom: 20px;">
+      <h3>👤 Jogador</h3>
+      <input type="text" id="nickname-input" placeholder="Seu nome no jogo" 
+        style="padding: 8px; margin-top: 10px; width: 90%; border-radius: 6px; 
+        border: none; background: #333; color: white;">
+    </section>
+    <!-- Seção: Mundo -->
+    <section style="margin-bottom: 20px;">
+      <h3>🌐 Mundo</h3>
+      <input type="text" id="world-name-input" placeholder="Nome do mundo" 
+        style="padding: 8px; margin: 10px 0; width: 90%; border-radius: 6px; 
+        border: none; background: #333; color: white;"><br>
+      <input type="text" id="world-seed-input" placeholder="Seed (opcional)" 
+        style="padding: 8px; margin: 10px 0; width: 90%; border-radius: 6px; 
+        border: none; background: #333; color: white;">
+    </section>
+    <!-- Seção: Dificuldade -->
+    <section style="margin-bottom: 20px;">
+      <h3>⚔️ Dificuldade</h3>
+      <div style="display: flex; justify-content: space-around; flex-wrap: wrap; gap: 10px;">
+        <button style="padding: 8px 16px; background: #2e7d32; border: 2px solid #555; 
+          border-radius: 8px; cursor: pointer;">😌 Fácil</button>
+        <button style="padding: 8px 16px; background: #f9a825; border: 2px solid #555; 
+          border-radius: 8px; cursor: pointer;">🙂 Médio</button>
+        <button style="padding: 8px 16px; background: #c62828; border: 2px solid #555; 
+          border-radius: 8px; cursor: pointer;">💀 Difícil</button>
+      </div>
+    </section>
+    <!-- Seção: Mundos já criados -->
+    <section style="margin-bottom: 20px;">
+      <h3>📜 Mundos Criados</h3>
+      <ul style="list-style: none; padding: 0; text-align: left; max-height: 120px; 
+        overflow-y: auto; background: #333; border-radius: 6px; margin: 10px 0;">
+        <li>🌍 Mundo 1 - Seed: 12345</li>
+        <li>🌍 Mundo 2 - Seed: 98765</li>
+        <li>🌍 Mundo 3 - Seed: 54321</li>
+      </ul>
+    </section>
+    <!-- Seção: Multiplayer -->
+    <section style="margin-bottom: 20px;">
+      <h3>🌐 Multiplayer</h3>
+      <div style="display: flex; justify-content: space-around; flex-wrap: wrap; gap: 10px;">
+        <button style="padding: 10px 20px; background: #1976d2; color: white; 
+          border: 2px solid #555; border-radius: 8px; cursor: pointer;">
+          🎮 Jogar como Host
+        </button>
+        <button style="padding: 10px 20px; background: #6a1b9a; color: white; 
+          border: 2px solid #555; border-radius: 8px; cursor: pointer;">
+          🌐 Conectar a Servidor
+        </button>
+      </div>
+    </section>
+    <!-- Seção: Ações -->
+    <section>
+      <button onclick="confirmNickname()" style="padding: 10px 20px; background: #333; color: white; 
+        border: 2px solid #555; border-radius: 8px; cursor: pointer; margin-top: 10px;">
+        ✅ Continuar
+      </button>
+      <button style="padding: 10px 20px; background: #444; color: white; 
+        border: 2px solid #555; border-radius: 8px; cursor: pointer; margin-top: 10px;">
+        ⚙️ Funções Extras
+      </button>
+    </section>
+  </div>
+</div>
+  <div id="respawn-screen" style="display:none;">
+  <div class="respawn-overlay">
+    <h2>💀 Você morreu!</h2>
+    <p>Deseja tentar novamente?</p>
+    <button onclick="respawnPlayer()">🔄 Respawn</button>
+    <button onclick="returnToMenu()">🏠 Menu</button>
+  </div>
+</div>
+  <div id="rain-overlay"></div>
+  <div id="quickbar" style="
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 12px;
+  padding: 10px;
+  background: #222;
+  border-top: 2px solid #555;
+  z-index: 1000;
+  border-radius: 8px 8px 0 0;
+  opacity: 0.7;">
+  <div id="zoom-bar" style="
+  position: fixed;
+  bottom: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #222;
+  border: 2px solid #555;
+  padding: 8px 12px;
+  border-radius: 8px;
+  z-index: 1000;
+  opacity: 0.8;">
+  <button onclick="adjustZoom(-0.1)" style="background:#333; color:white; border:1px solid #555; padding:6px 10px; border-radius:6px; cursor:pointer;">➖</button>
+  <span id="zoom-level" style="color:white; font-size:11px;">Zoom: 1.0x</span>
+  <button onclick="adjustZoom(0.1)" style="background:#333; color:white; border:1px solid #555; padding:6px 10px; border-radius:6px; cursor:pointer;">➕</button>
+</div>
+  <div class="quick-slot"></div>
+  <div class="quick-slot"></div>
+  <div class="quick-slot"></div>
+  <div class="quick-slot"></div>
+</div>
+<!-- Tela de Missões -->
+<div id="missions-screen" style="display:none;">
+  <div class="missions-overlay">
+    <h2>📜 Missões Ativas</h2>
+    <ul id="missions-list">
+      <li>🌲 Coletar 50 madeiras</li>
+      <li>🪨 Quebrar 30 pedras</li>
+      <li>🧱 Construir 2 tábuas</li>
+      <li>🦞 Destruir 20 Lagostas</li>
+    </ul>
+    <button onclick="closeMissionsScreen()">❌ Fechar</button>
+  </div>
+</div>
+   <button id="settings-button"></button>
+   <div id="settings-panel">
+  <h3>🎒 Inventário</h3>
+  <div class="settings-section">
+    <button onclick="openBackpackPanel()">🎒 Abrir Mochila</button>
+    <button onclick="openCraftPanel()">🧪 Abrir Craft</button>
+    <div>🌱 Seed: <span id="seed-display">-</span></div>
+    <div class="settings-section">
+</div>
+  </div>
+</div>
+<button id="canteen-button" onclick="drinkWater()">💧</button>
+<button id="potion-button" onclick="usePotion()">🍷</button>
+<button id="mission-button" onclick="toggleMissionPanel()">📜</button>
+<button id="toggle-chat-button" onclick="toggleChat()">💬 </button>
+<button id="extra-settings-button" onclick="toggleExtraSettings()">⚙️</button>
+<div id="extra-settings-panel" style="
+  display: none;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  background: rgba(20, 20, 20, 0.9);
+  z-index: 3000;
+  box-sizing: border-box;">
+  <!-- Botão de sair -->
+  <button onclick="closeExtraSettings()" style="
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: #333;
+    color: white;
+    border: 2px solid #555;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+  ">❌ Sair</button>
+  <!-- Conteúdo central -->
+  <div style="margin-top: 80px; text-align: center; color: white;">
+    <h1>⚙️ Configurações</h1>
+    <p>Aqui você pode adicionar opções avançadas, controles ou informações.</p>
+    <!-- Controle de Zoom -->
+    <div style="margin-top: 30px;">
+      <label style="font-size: 16px;">
+        <input type="checkbox" id="extra-zoom-toggle" onchange="toggleZoomBarFromExtra()" checked>
+        🔍 Habilitar controle de Zoom
+        <button onclick="returnToMenu()">🏠 Menu</button>
+      </label>
+    </div>
+    <div style="margin-top: 20px;">
+  <label style="font-size: 16px;">
+    <input type="checkbox" id="toggle-hand-buttons" onchange="toggleHandButtons()" checked>
+    ✋ Mostrar botões de mão
+  </label>
+</div>
+  </div>
+</div>
+<!-- Painel de Chat Flutuante -->
+<div id="chat-panel" style="display:none; position:absolute; bottom:120px; left:20px; width:300px; background:#222; border:2px solid #555; border-radius:8px; padding:10px; z-index:1000;">
+  <h4 style="color:#fff; margin:0 0 10px;">💬 Chat</h4>
+  <div id="chat-box" style="height:150px; overflow-y:auto; background:#333; padding:5px; border-radius:5px; font-size:12px;"></div>
+  <input type="text" placeholder="Digite uma mensagem..." onkeydown="sendMessage(event)" maxlength="100" style="width:96%; margin-top:8px; padding:6px; border:none; border-radius:4px; background:#444; color:#fff;">
+</div>
+<div id="fixed-status-bars">
+  <div>⚔️ Nível: <span id="player-level">1</span> | XP: <span id="player-xp">0</span></div>
+  <div id="hunger-thirst-row">
+    <div>
+      🍗 <span id="hunger-value">100</span>
+      <div class="bar">
+        <div id="hunger-bar" class="status-bar"></div>
+      </div>
+    </div>
+    <div>
+      💧 <span id="thirst-value">100</span>
+      <div class="bar">
+        <div id="thirst-bar" class="status-bar"></div>
+      </div>
+    </div>
+  </div>
+  <div>
+    ❤️ <span id="player-hp">100</span>
+    <div class="bar">
+      <div id="characterHpBarHUD" class="status-bar character-hp-bar"></div>
+    </div>
+  </div>
+</div>
+  <div id="boss-hud">
+  <span id="boss-name">Dragão</span>
+  <div style="flex: 1; margin-left: 20px; background-color: #222; height: 12px; border-radius: 6px; overflow: hidden;">
+  <div id="boss-hp-bar" style="height: 100%; background-color: red; width: 100%; transition: width 0.3s ease;"></div>
+  </div>
+  </div>
+  <!-- Container principal do jogo -->
+  <div class="game-container">
+      <div> <span id="player-name">Jogador</span></div>
+    </div>
+    <div class="map" id="map">
+  <!-- Primeiro andar do mapa -->
+  <div class="map-content" id="mapContent">
+    <div class="character" id="character">
+      <div class="character-name" id="characterNameDisplay"></div>
+      <div class="character-hp">
+     <div class="character-hp-bar" id="characterHpBarInGame"></div>
+    </div>
+    </div>
+  </div>
+  <!-- Segundo andar do mapa (inicialmente oculto) -->
+  <div class="map-content" id="mapContentSecond" style="display:none;"></div>
+</div>
+    </div>
+     <div class="inventory">
+  <div>
+    <div id="craft-floating-panel" style="display:none; position:absolute; top:120px; left:354px; width:150px; background:#222; border:2px solid #555; border-radius:8px; padding:10px; z-index:1000;">
+      <h4 style="color:#fff; margin:0 0 10px;">🧪 Painel de Craft</h4>
+      <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:10px;">
+        <button onclick="craftPotion()" style="background:#333; border:1px solid #555; padding:8px; border-radius:6px; cursor:pointer;">
+          <img src="item_poção.jpeg.png" alt="Poção de Cura" style="width:40px; height:40px;">
+        </button>
+        <button onclick="craftAxe()" style="background:#333; border:1px solid #555; padding:8px; border-radius:6px; cursor:pointer;">
+          <img src="item_machado.jpeg.png" alt="Machado" style="width:40px; height:40px;">
+        </button>
+        <button onclick="craftShovel()" style="background:#333; border:1px solid #555; padding:8px; border-radius:6px; cursor:pointer;">
+          <img src="item_pá.jpeg.png" alt="Pá" style="width:40px; height:40px;">
+        </button>
+        <button onclick="craftPlanks()" style="background:#333; border:1px solid #555; padding:8px; border-radius:6px; cursor:pointer;">
+          <img src="plank.jpeg.png" alt="Tábuas de Madeira" style="width:40px; height:40px;">
+        </button>
+        <button onclick="craftPickaxe()" style="background:#333; border:1px solid #555; padding:8px; border-radius:6px; cursor:pointer;">
+          <img src="item_picareta.jpeg.png" alt="Picareta" style="width:40px; height:40px;">
+        </button>
+      </div>
+      <button onclick="closeCraftPanel()" style="margin-top:10px; background:#333; color:white; border:1px solid #555; padding:6px 12px; border-radius:6px; cursor:pointer;">❌ Fechar</button>
+    </div>
+  </div>
+</div>
+  </div>
+    </div>
+<div id="backpack-floating-panel" style="display:none; position:absolute; top:120px; left:80px; width:250px; background:#222; border:2px solid #555; border-radius:8px; padding:10px; z-index:1000;">
+  <h4 style="color:#fff; margin:0 0 10px;">🎒 Mochila</h4>
+  <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:10px;">
+    <div class="slot"></div>
+    <div class="slot"></div>
+    <div class="slot"></div>
+    <div class="slot"></div>
+    <div class="slot"></div>
+    <div class="slot"></div>
+    <div class="slot"></div>
+    <div class="slot"></div>
+  </div>
+  <button onclick="closeBackpackPanel()" style="margin-top:10px; background:#333; color:white; border:1px solid #555; padding:6px 12px; border-radius:6px; cursor:pointer;">❌ Fechar</button>
+  <button onclick="dropSelectedItem()" style="margin-left:10px; background:#333; color:white; border:1px solid #555; padding:6px 12px; border-radius:6px; cursor:pointer;">🗑️ Drop</button>
+</div>
+</div>
+    </div>
+  </div>
+<div id="editor-panel">
+  <h3>🛠️ Editor de Mapa</h3>
+  <div class="editor-section">
+    <h4>👾 Criaturas</h4>
+    <button onclick="createEnemy(gridX, gridY, 'aldeão')">Aldeão</button>
+    <button onclick="createEnemy(gridX, gridY, 'arqueiro')">Arqueiro</button>
+    <button onclick="spawnBoss(gridX, gridY, 'dragão')">Dragão</button>
+    <button onclick="spawnBoss(gridX, gridY, 'general lagosta')">General Lagosta</button>
+    <button onclick="createEnemy(gridX, gridY, 'dragão Ancião')">Dragão Ancião</button>
+    <button onclick="createEnemy(gridX, gridY, 'esqueleto')">Esqueleto</button>
+    <button onclick="createEnemy(gridX, gridY, 'fantasma')">Fantasma</button>
+    <button onclick="createEnemy(gridX, gridY, 'golem')">Golem</button>
+    <button onclick="createEnemy(gridX, gridY, 'grifo')">Grifo</button>
+    <button onclick="createEnemy(gridX, gridY, 'lagosta')">Lagosta</button>
+    <button onclick="createEnemy(gridX, gridY, 'lobisomem')">Lobisomem</button>
+    <button onclick="createEnemy(gridX, gridY, 'mago')">Mago Sombrio</button>
+    <button onclick="createEnemy(gridX, gridY, 'pinguim')">Pinguim</button>
+    <button onclick="createEnemy(gridX, gridY, 'porco')">Porco</button>
+    <button onclick="createEnemy(gridX, gridY, 'urso')">Urso</button>
+    <button onclick="createEnemy(gridX, gridY, 'vaca')">Vaca</button>
+    <button onclick="createEnemy(gridX, gridY, 'zumbi')">Zumbi</button>
+  </div>
+  <div class="editor-section">
+  <h4>🎒 Adicionar Itens à Mochila</h4>
+  <button onclick="addItemToBackpack('fruta')">🍎</button>
+  <button onclick="addItemToBackpack('poção')">🍷</button>
+  <button onclick="addItemToBackpack('pedra')">🪨</button>
+  <button onclick="addItemToBackpack('madeira')">🪵</button>
+  <button onclick="addItemToBackpack('tabua')">🧱</button>
+  <button onclick="addItemToBackpack('machado')">🪓</button>
+  <button onclick="addItemToBackpack('pá')">🪣</button>
+  <button onclick="addItemToBackpack('lagosta')">🦞</button>
+  <button onclick="addItemToBackpack('picareta')">⛏️</button>
+</div>
+  <div class="editor-section">
+    <h4>🧱 Obstáculos</h4>
+    <button onclick="createObstacle()">Criar Obstáculo</button>
+    <button onclick="removeObstacle()">Remover Obstáculo</button>
+    <button onclick="placePlankObstacle()">🪵 Tábuas de Madeira</button>
+    <button onclick="placeCampfireObstacle()">🔥 Fogueira </button>
+    <button onclick="placeBigornaObstacle()">⚒️ Bigorna</button>
+    <button onclick="placeJarroObstacle()">⚱️ Jarro</button>
+    <button onclick="placeEstandeDeLivrosObstacle()">📚 Estande de Livros</button>
+    <button onclick="placeCaldeiraoObstacle()">⚗️ Caldeirão</button>
+    <button onclick="placePortaObstacle()">🪵 Porta</button>
+    <button onclick="placeBauObstacle()">🪵 Bau</button>
+    <button onclick="placeBannerObstacle()">🪵 Banner</button>
+    <button onclick="placeFornalhaObstacle()">🪵 Fornalha</button>
+    <button onclick="placeBancadaObstacle()">🛠️ Bancada</button>
+  </div>
+  <div class="editor-section">
+    <h4>🌍 Terrenos</h4>
+    <button onclick="placeTerrain('water')">Água</button>
+    <button onclick="placeTerrain('deepwater')">Água Profunda</button>
+    <button onclick="placeTerrain('lava')">Lava</button>
+    <button onclick="placeTerrain('sand')">Areia</button>
+    <button onclick="placeTerrain('smoothstone')">Pedra Lisa</button>
+    <button onclick="placeTerrain('grass')">Grama</button>
+    <button onclick="placeTerrain('dirt')">Terra</button>
+    <button onclick="placeTerrain('drygrass')">Grama Seca</button>
+    <button onclick="placeTerrain('snow')">Neve</button>
+    <button onclick="placeTerrain('wood')">Madeira</button>
+    <button onclick="placeTerrain('caverna')">Caverna</button>
+    <button onclick="removeTerrain()">Remover Terreno</button>
+  </div>
+  <div class="editor-section">
+  <h4>🌿 Natureza</h4>
+  <button onclick="placeNature('tree')">🌲</button>
+  <button onclick="placeNature('largetree')">🌲</button>
+  <button onclick="placeNature('cacto')">🌵</button>
+  <button onclick="placeNature('rock')">🪨</button>
+  <button onclick="placeNature('poppy')">🌺</button> 
+  </div>
+  <div class="editor-section">
+    <button onclick="closeEditor()">❌ Fechar Painel</button>
+  </div>
+</div>
+<script>
+  const lightMap = {}; // chave: "x-y", valor: nível de luz (0 a 8)
+  const MAX_LIGHT_LEVEL = 8;
+function setCharacterDirection(dx, dy, isMoving) {
+  character.classList.remove(
+    "up", "down", "left", "right",
+    "walk-up", "walk-down", "walk-left", "walk-right"
+  );
+  let dir = lastDirection;
+  if (dx !== 0 || dy !== 0) {
+    if (Math.abs(dx) > Math.abs(dy)) {
+      dir = dx > 0 ? "right" : "left";
+    } else {
+      dir = dy > 0 ? "down" : "up";
+    }
+    lastDirection = dir; // ✅ salva a direção real
+  }
+  if (isMoving) {
+    character.classList.add("walk-" + dir); // GIF
+  } else {
+    character.classList.add(dir); // PNG parado
+  }
+}
+  let mainHand = "right"; // padrão
+function setMainHand(hand) {
+  mainHand = hand;
+}
+function placeObstacle(type) {
+  const id = `obstacle-${type}-${gridX}-${gridY}`;
+  if (document.getElementById(id)) return;
+  const el = document.createElement("div");
+  el.className = `obstacle ${type}`;
+  el.id = id;
+  el.style.left = `${gridX * cellSize}px`;
+  el.style.top = `${gridY * cellSize}px`;
+  el.style.position = "absolute";
+  el.dataset.type = type;
+  el.dataset.clicks = "0";
+  mapContent.appendChild(el);
+}
+function placeBancadaObstacle()         { placeObstacle("bancada"); }
+function placeCaldeiraoObstacle()       { placeObstacle("caldeirao"); }
+function placePortaObstacle()           { placeObstacle("porta"); }
+function placeEstandeDeLivrosObstacle() { placeObstacle("estande_de_livros"); }
+function placeJarroObstacle()           { placeObstacle("jarro"); }
+function placeBigornaObstacle()         { placeObstacle("bigorna"); }
+function placeBauObstacle()             { placeObstacle("bau"); }
+function placeBannerObstacle()          { placeObstacle("banner"); }
+function placeFornalhaObstacle()        { placeObstacle("fornalha"); }
+function makeBancadaInteractive(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.onclick = () => {
+    alert("🛠️ Você usou a bancada para criar ferramentas!");
+    backpackItems.push("machado");
+    updateBackpackUIFloating();
+    updateQuickbar();
+  };
+}
+function makeCaldeiraoInteractive(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.onclick = () => {
+    backpackItems.push("poção");
+    updateBackpackUIFloating();
+    updateQuickbar();
+  };
+}
+function makeEstandeInteractive(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.onclick = () => {
+    xp += 10;
+    updateHUD();
+  };
+}
+function makeJarroInteractive(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.onclick = () => {
+    dropItem(gridX, gridY, "fruta"); // exemplo de loot
+    el.remove();
+  };
+}
+function createObstacle(type = "plank") {
+  const onSecond = !!hasDescendedByCave;
+  const suffix = onSecond ? "-second" : "";
+  const id = `obstacle-${type}-${gridX}-${gridY}${suffix}`;
+  if (document.getElementById(id)) {
+    return alert("🚫 Já existe um obstáculo aqui.");
+  }
+  const obstacle = document.createElement("div");
+  obstacle.className = `obstacle ${type}`;
+  obstacle.id = id;
+  obstacle.style.position = "absolute";
+  obstacle.style.left = `${gridX * cellSize}px`;
+  obstacle.style.top = `${gridY * cellSize}px`;
+  obstacle.dataset.clicks = "0";
+  obstacle.dataset.type = type;
+  obstacle.dataset.x = `${gridX}`;
+  obstacle.dataset.y = `${gridY}`;
+  obstacle.dataset.floor = onSecond ? "second" : "first";
+  obstacle.onclick = () => incrementObstacleClicks(id);
+  const activeMap = onSecond ? mapContentSecond : mapContent;
+  activeMap.appendChild(obstacle);
+}
+function incrementObstacleClicks(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const clicks = (parseInt(el.dataset.clicks || "0", 10) + 1);
+  el.dataset.clicks = `${clicks}`;
+  if (clicks >= 10) {
+    const px = parseInt(el.dataset.x, 10);
+    const py = parseInt(el.dataset.y, 10);
+    const type = el.dataset.type;
+    if (type === "tree") dropItem(px, py, "madeira");
+     else if (type === "largetree") {
+      dropItem(px, py, "madeira");
+      dropItem(px, py, "madeira");
+      dropItem(px, py, "fruta");
+     }
+    else if (type === "rock") dropItem(px, py, "pedra");
+    else if (type === "plank") dropItem(px, py, "tabua");
+    else if (type === "campfire") dropItem(px, py, "carvao");
+    el.remove();
+    delete obstacleSpaceClicks[id];
+    if (lastHighlightedObstacle && lastHighlightedObstacle.id === id) {
+      lastHighlightedObstacle = null;
+    }
+  } else {
+    el.style.boxShadow = "0 0 6px 2px yellow";
+    setTimeout(() => (el.style.boxShadow = ""), 200);
+  }
+}
+function toggleHandButtons() {
+  const show = document.getElementById("toggle-hand-buttons").checked;
+  const container = document.getElementById("hand-buttons");
+  container.style.display = show ? "flex" : "none";
+}
+function enableClickOnEntityElement(el) {
+  el.style.cursor = "pointer";
+  el.addEventListener("click", (evt) => {
+    evt.stopPropagation();
+  });
+  el.querySelectorAll("*").forEach(ch => { ch.style.pointerEvents = "none"; });
+}
+function toggleExtraSettings() {
+  document.getElementById("extra-settings-panel").style.display = "block";
+}
+function closeExtraSettings() {
+  document.getElementById("extra-settings-panel").style.display = "none";
+}
+function closeMissionsScreen() {
+  document.getElementById("missions-screen").style.display = "none";
+}
+function closeCraftPanel() {
+  setPanelVisibility("craft-floating-panel", false);
+}
+function closeBackpackPanel() {
+  setPanelVisibility("backpack-floating-panel", false);
+  settingsButton.style.backgroundImage = "url('backpack_close.jpeg.png')";
+}
+function closeEditor() {
+  document.getElementById("editor-panel").style.display = "none";
+}
+function toggleZoomBarFromExtra() {
+  const checkbox = document.getElementById("extra-zoom-toggle");
+  const zoomBar = document.getElementById("zoom-bar");
+  zoomBar.style.display = checkbox.checked ? "flex" : "none";
+}
+function startGame() {
+  document.getElementById("main-menu").style.display = "none";
+  document.getElementById("nickname-screen").style.display = "flex";
+}
+function confirmNickname() {
+  playerName = document.getElementById("nickname-input").value.trim() || "Jogador";
+  document.getElementById("nickname-screen").style.display = "none";
+  document.getElementById("player-name").textContent = playerName;
+  document.getElementById("characterNameDisplay").textContent = `${playerName} Lv.${level}`;
+}
+function exitGame() { location.reload(); }
+function showRespawnScreen() { document.getElementById("respawn-screen").style.display = "flex"; }
+function respawnPlayer() {
+  hp = 100;
+  hunger = 100;
+  thirst = 100;
+  gridX = Math.floor(mapCols / 2);
+  gridY = Math.floor(mapRows / 2);
+  updateHUD();
+  updatePosition();
+  document.getElementById("respawn-screen").style.display = "none";
+}
+function returnToMenu() {
+  alert("🏠 Retornando ao menu...");
+  location.reload(); // ou redirecionar para tela inicial
+}
+function dropSelectedItem() {
+  if (selectedItemIndex === null || backpackItems[selectedItemIndex] === undefined) {
+    return;
+  }
+  const itemType = backpackItems[selectedItemIndex];
+  dropItem(gridX, gridY, itemType); // dropa na posição atual do jogador
+  backpackItems.splice(selectedItemIndex, 1); // remove do inventário
+  const slots = document.querySelectorAll("#backpack-floating-panel .slot");
+  slots[selectedItemIndex].classList.remove("selected");
+  selectedItemIndex = null; // limpa seleção
+  updateBackpackUIFloating();
+  updateQuickbar();
+}
+function shootFireballFromBoss() {
+  if (!boss) return;
+  const dx = gridX - boss.x, dy = gridY - boss.y;
+  const direction = Math.abs(dx) > Math.abs(dy)
+    ? (dx > 0 ? 1 : -1) : (dy > 0 ? cellSize : -cellSize);
+  const isHorizontal = Math.abs(dx) > Math.abs(dy);
+  const createFireball = () => {
+  const fb = Object.assign(document.createElement("div"), { className: "fireball" });
+    Object.assign(fb.style, {
+      position: "absolute",
+      width: "20px",
+      height: "20px",
+      backgroundColor: "orange",
+      borderRadius: "50%",
+      zIndex: "10"
+    });
+    mapContent.appendChild(fb);
+    return fb;
+  };
+  const moveFireball = (fb, fx, fy) => {
+    let steps = 0;
+  const fly = setInterval(() => {
+      steps++;
+      isHorizontal ? fx += Math.sign(direction) : fy += Math.sign(direction / cellSize);
+      Object.assign(fb.style, {
+        left: `${fx * cellSize}px`,
+        top: `${fy * cellSize}px`
+      });
+      if ((fx === gridX && fy === gridY) || steps >= 7 || fx < 0 || fy < 0 || fx >= mapCols || fy >= mapRows) {
+        if (fx === gridX && fy === gridY) applyDamage(20);
+        clearInterval(fly);
+        fb.remove();
+      }
+    }, 200);
+  };
+  let count = 0;
+  const shoot = setInterval(() => {
+    if (++count > 7) return clearInterval(shoot);
+    moveFireball(createFireball(), boss.x, boss.y);
+  }, 300);
+}
+  const deepWaterPositions = [];
+  let currentZoom = 1.0;
+function adjustZoom(delta) {
+  currentZoom = Math.max(0.5, Math.min(2.0, currentZoom + delta));
+  document.getElementById("zoom-level").textContent = `Zoom: ${currentZoom.toFixed(1)}x`;
+  centerMapOn(gridX * cellSize, gridY * cellSize);
+  ["build-cursor", "tile-hover-indicator"].forEach(id => {
+  const el = document.getElementById(id);
+    if (el) el.style.transform = `scale(${currentZoom})`;
+  });
+}
+function usePotion() { hp = Math.min(100, hp + 30); updateHUD(); }
+function addItemToBackpack(type) {
+  if (backpackItems.length >= 8) {
+    alert("🎒 Mochila cheia!");
+    return;
+  }
+  backpackItems.push(type);
+  updateBackpackUI();
+  updateBackpackUIFloating();
+  updateQuickbar();
+}
+  let isDay = true;
+  let dayNightOverlay = null;
+document.querySelectorAll('.slot').forEach((slot, index) =>
+  slot.addEventListener('click', () => {
+    document.querySelectorAll('.slot').forEach(s => s.classList.remove("selected"));
+    slot.classList.add("selected");
+    selectedItemIndex = index;
+  })
+);
+function highlightObstacle(x, y) {
+  if (lastHighlightedObstacle) {
+    lastHighlightedObstacle.style.boxShadow = "";
+    lastHighlightedObstacle = null;
+  }
+  const types = ["", "tree", "largetree", "rock", "plank"];
+  const suffix = hasDescendedByCave ? "-second" : "";
+  for (const type of types) {
+    const id = type
+      ? `obstacle-${type}-${x}-${y}${suffix}`
+      : `obstacle-${x}-${y}${suffix}`;
+    const obstacle = document.getElementById(id);
+    if (obstacle) {
+      obstacle.style.boxShadow = "0 0 8px 3px yellow";
+      lastHighlightedObstacle = obstacle;
+      break;
+    }
+  }
+}
+function highlightEntity(x, y) {
+  if (lastHighlightedEntity) {
+    lastHighlightedEntity.style.boxShadow = "0 0 8px 3px yellow";
+    lastHighlightedEntity = null;
+  }
+  for (const id in enemies) {
+    const e = enemies[id];
+    if (e.x === x && e.y === y) {
+      e.element.style.boxShadow = "0 0 8px 3px yellow";
+      lastHighlightedEntity = e.element;
+      return;
+    }
+  }
+  if (boss && boss.x === x && boss.y === y) {
+    boss.element.style.boxShadow = "0 0 8px 3px yellow";
+    lastHighlightedEntity = boss.element;
+  }
+}
+function toggleMissionsScreen() {
+  const screen = document.getElementById("missions-screen");
+  screen.style.display = screen.style.display === "flex" ? "none" : "flex";
+}
+document.getElementById("mission-button").onclick = toggleMissionsScreen;
+function toggleChat() {
+  const panel = document.getElementById("chat-panel");
+  panel.style.display = panel.style.display === "none" ? "block" : "none";
+}
+  const settingsButton = document.getElementById("settings-button");
+  const settingsPanel = document.getElementById("settings-panel");
+settingsButton.onclick = () => {
+  const isOpen = settingsPanel.style.display === "block";
+  settingsPanel.style.display = isOpen ? "none" : "block";
+  settingsButton.style.backgroundImage = isOpen
+   ? "url('backpack_close.jpeg.png')"
+    : "url('backpack_open.jpeg.png')";
+};
+  let mapCols = 64;
+  let mapRows = 64;
+  let selectedItemIndex = null;
+  const backpackItems = []; // Armazena os itens coletados
+function eatFruit() {
+  const index = backpackItems.indexOf("fruta");
+    if (index === -1) {
+      return;
+    }
+    hunger = Math.min(100, hunger + 15);
+    backpackItems.splice(index, 1);
+    updateHUD();
+    updateBackpackUI();
+  }
+function togglePanel(id) {
+  const panel = document.getElementById(id);
+  panel.style.display = panel.style.display === "none" ? "block" : "none";
+}
+function setPanelVisibility(id, visible) {
+  document.getElementById(id).style.display = visible ? "block" : "none";
+}
+function toggleCraftPanel() { togglePanel("craft-panel"); }
+function openCraftPanel() { setPanelVisibility("craft-floating-panel", true); }
+function openBackpackPanel() {
+  setPanelVisibility("backpack-floating-panel", true);
+  updateBackpackUIFloating();
+}
+function removeItems(itemName, quantity) {
+  let removed = 0;
+  for (let i = backpackItems.length - 1; i >= 0 && removed < quantity; i--) {
+    if (backpackItems[i] === itemName) {
+      backpackItems.splice(i, 1);
+      removed++;
+    }
+  }
+  return removed === quantity;
+}
+function craftPotion() {
+  const fruitCount = backpackItems.filter(item => item === "fruta").length;
+  const stoneCount = backpackItems.filter(item => item === "pedra").length;
+  if (fruitCount >= 1 && stoneCount >= 1) {
+  const removedFruit = removeItems("fruta", 1);
+  const removedStone = removeItems("pedra", 1);
+    if (removedFruit && removedStone) {
+      backpackItems.push("poção");
+      updateBackpackUIFloating();
+      updateQuickbar();
+    }
+  } else {
+    alert("❌ Você precisa de 1 fruta e 1 pedra para criar uma poção.");
+  }
+}
+function craftPlanks() {
+  const woodCount = backpackItems.filter(item => item === "madeira").length;
+  if (woodCount >= 2 && removeItems("madeira", 2)) {
+    backpackItems.push("tabua");
+    updateBackpackUIFloating();
+    updateQuickbar();
+  } else {
+    alert("❌ Você precisa de 2 madeiras para criar tábuas.");
+  }
+}
+function craftAxe() {
+  const woodCount = backpackItems.filter(item => item === "madeira").length;
+  const stoneCount = backpackItems.filter(item => item === "pedra").length;
+  if (woodCount >= 2 && stoneCount >= 3 &&
+      removeItems("madeira", 2) && removeItems("pedra", 3)) {
+    backpackItems.push("machado");
+    updateBackpackUIFloating();
+    updateQuickbar();
+  } else {
+    alert("❌ Você precisa de 2 madeiras e 3 pedras para criar um machado.");
+  }
+}
+function craftShovel() {
+  const woodCount = backpackItems.filter(item => item === "madeira").length;
+  const stoneCount = backpackItems.filter(item => item === "pedra").length;
+  if (woodCount >= 1 && stoneCount >= 2 &&
+      removeItems("madeira", 1) && removeItems("pedra", 2)) {
+    backpackItems.push("pá");
+    updateBackpackUIFloating();
+    updateQuickbar();
+  } else {
+    alert("❌ Você precisa de 1 madeira e 2 pedras para criar uma pá.");
+  }
+}
+function craftPickaxe() {
+  const woodCount = backpackItems.filter(item => item === "madeira").length;
+  const stoneCount = backpackItems.filter(item => item === "pedra").length;
+  if (woodCount >= 2 && stoneCount >= 4 &&
+      removeItems("madeira", 2) && removeItems("pedra", 4)) {
+    backpackItems.push("picareta");
+    updateBackpackUIFloating();
+    updateQuickbar();
+  } else {
+    alert("❌ Você precisa de 2 madeiras e 4 pedras para criar uma picareta.");
+  }
+}
+  const itemSprites = {
+  fruta: "item_maçã.jpeg.png",
+  poção: "item_poção.jpeg.png",
+  madeira: "item_madeira.jpeg.png",
+  pedra: "item_pedra.jpeg.png",
+  machado: "item_machado.jpeg.png",
+  tabua: "plank.jpeg.png",
+  lagosta: "item_lagosta.jpeg.png",
+  pá: "item_pá.jpeg.png",
+  picareta: "item_picareta.jpeg.png"
+};
+  const itemMeta = {
+  fruta: {
+    title: "Clique na barra para comer",
+    select: true
+  },
+  poção: {
+    title: "Clique para usar",
+    use: (i) => {
+      usePotion();
+      backpackItems.splice(i, 1);
+      updateHUD();
+    }
+  },
+  madeira:  { title: "Madeira coletada" },
+  pedra:    { title: "Pedra coletada" },
+  machado:  { title: "Machado equipado", },
+  tabua:    { title: "Clique no mapa para construir", select: true },
+  pá:       { title: "Clique no mapa para escavar", select: true },
+  lagosta:  { title: "Lagosta misteriosa" },
+  picareta: { title: "Clique no mapa para minerar", select: true,
+  use: (i) => {
+    digTileWithPickaxe(gridX, gridY);} //corrigir para que o tile seja removido atraves do click
+  }
+};
+function updateBackpackUIFloating() {
+  const slots = document.querySelectorAll("#backpack-floating-panel .slot");
+  slots.forEach((slot, i) => {
+  const item = backpackItems[i];
+    slot.innerHTML = "";
+    slot.style.backgroundColor = "#444";
+    slot.onclick = null;
+    if (!item || !itemMeta[item]) return;
+  const { title, use } = itemMeta[item];
+  const img = document.createElement("img");
+    img.src = itemSprites[item];
+    img.alt = item;
+    img.style.width = "100%";
+    img.style.height = "100%";
+    img.style.objectFit = "contain";
+    img.style.pointerEvents = "none";
+    slot.appendChild(img);
+    slot.title = title;
+    if (use) {
+      slot.onclick = () => {
+        use(i);
+        updateBackpackUIFloating();
+        updateQuickbar();
+      };
+    }
+  });
+}
+function updateQuickbar() {
+  const quickSlots = document.querySelectorAll("#quickbar .quick-slot");
+  for (let i = 0; i < 4; i++) {
+  const item = backpackItems[i];
+  const slot = quickSlots[i];
+    slot.innerHTML = "";
+    slot.style.backgroundColor = "#444";
+    slot.title = "";
+    slot.classList.remove("selected");
+    if (!item || !itemMeta[item]) {
+      slot.onclick = () => {
+        selectedItemIndex = null;
+        updateQuickbarSelection(null);
+      };
+      continue;
+    }
+  const { title, use, select } = itemMeta[item];
+  const img = document.createElement("img");
+    img.src = itemSprites[item];
+    img.alt = item;
+    img.style.width = "100%";
+    img.style.height = "100%";
+    img.style.objectFit = "contain";
+    img.style.pointerEvents = "none";
+    slot.appendChild(img);
+    slot.title = title;
+    slot.onclick = () => {
+      if (item === "fruta") {
+        hunger = Math.min(100, hunger + 15);
+        backpackItems.splice(i, 1);
+        updateHUD();
+        updateQuickbar();
+        updateBackpackUIFloating();
+      } else if (use) {
+        use(i);
+        updateQuickbar();
+        updateBackpackUIFloating();
+      } else if (select) {
+        selectedItemIndex = i;
+        updateQuickbarSelection(i);
+      } else {
+        selectedItemIndex = null;
+        updateQuickbarSelection(null);
+      }
+    };
+  }
+}
+function updateQuickbarSelection(index) {
+  const quickSlots = document.querySelectorAll("#quickbar .quick-slot");
+  quickSlots.forEach((slot, i) => {
+    slot.classList.toggle("selected", i === index);
+  });
+}
+  setInterval(() => {
+  if (hunger > 0) hunger--;
+  if (thirst > 0) thirst--;
+  updateHUD();
+  if (hunger === 0 || thirst === 0) {
+    hp -= 1;
+    updateHUD();
+    if (hp <= 0) showRespawnScreen();
+  }
+}, 10000); // A cada 10 segundos
+function updateBackpackUI() {
+  const slots = document.querySelectorAll("#backpack-panel .slot");
+  slots.forEach((slot, i) => {
+    slot.textContent = backpackItems[i] ? "🍎" : "";
+    slot.style.backgroundColor = backpackItems[i] ? "#4CAF50" : "#444";
+  });
+}
+  // 🌍 Variáveis globais
+  const cellSize = 40;
+  let gridX = 5, gridY = 5;
+  let hp = 100, xp = 0, level = 1;
+  let hunger = 100;
+  let thirst = 100;
+  let adminMode = false;
+  let enemyCount = 0;
+  let boss = null;
+  let playerName = "Jogador"; // valor padrão
+  let lastDirection = "down"; // direção padrão ao iniciar
+  const terrainMap = {};
+  const enemies = {};
+  const map = document.getElementById("map");
+  const mapContent = document.getElementById("mapContent");
+  const character = document.getElementById("character");
+  const terrainHitMap = {}; // chave: "x-y", valor: número de cliques
+  const drinkWater = () => (thirst = Math.min(100, thirst + 30), updateHUD());
+  const campfirePositions = [];
+function updateHUD() {
+    document.getElementById("player-hp").textContent = hp;
+    document.getElementById("player-xp").textContent = xp;
+    document.getElementById("player-level").textContent = level;
+    document.getElementById("characterHpBarHUD").style.width = `${Math.max(0, hp)}%`;
+    document.getElementById("characterHpBarInGame").style.width = `${Math.max(0, hp)}%`;
+    document.getElementById("hunger-value").textContent = hunger;
+    document.getElementById("thirst-value").textContent = thirst;
+    document.getElementById("hunger-bar").style.width = `${hunger}%`;
+    document.getElementById("thirst-bar").style.width = `${thirst}%`;
+    document.getElementById("characterNameDisplay").textContent = `${playerName} Lv.${level}`;
+  }
+let currentWeather = "clear";
+let rainTimeout = null;
+let rainInterval = null;
+  const rainOverlay = document.createElement("div");
+rainOverlay.id = "rain-overlay";
+document.body.appendChild(rainOverlay);
+Object.assign(rainOverlay.style, {
+  position: "fixed",
+  width: "100%",
+  height: "100%",
+  pointerEvents: "none",
+  zIndex: "998",
+  overflow: "hidden"
+});
+  const rainFilterOverlay = document.createElement("div");
+rainFilterOverlay.id = "rain-filter-overlay";
+Object.assign(rainFilterOverlay.style, {
+  position: "fixed",
+  width: "100%",
+  height: "100%",
+  backgroundColor: "rgba(100, 150, 255, 0.2)", // 🔧 Altere a cor aqui
+  pointerEvents: "none",
+  zIndex: "997",
+  display: "none",
+  transition: "opacity 1s ease"
+});
+  const screenVignette = document.createElement("div");
+screenVignette.id = "screen-vignette";
+Object.assign(screenVignette.style, {
+  position: "fixed",
+  top: "0",
+  left: "0",
+  width: "100%",
+  height: "100%",
+  pointerEvents: "none",
+  zIndex: "996",
+  background: "radial-gradient(ellipse at center, rgba(0,0,0,0) 15%, rgba(0,0,0,0.7) 100%)",
+  opacity: "0",
+  transition: "opacity 1s ease"
+});
+document.body.appendChild(screenVignette);
+document.body.appendChild(rainFilterOverlay);
+  const style = document.createElement("style");
+document.head.appendChild(style);
+function updateVignetteVisibility() {
+  const shouldShow = currentWeather === "rain" || !isDay;
+  screenVignette.style.opacity = shouldShow ? "1" : "0";
+}
+function spawnRaindrops(count = 100) {
+  for (let i = 0; i < count; i++) {
+  const drop = document.createElement("div");
+    drop.className = "raindrop";
+  const startX = Math.random() * window.innerWidth;
+  const delay = Math.random() * 1; // gotas surgem com atraso aleatório
+  const duration = 1 + Math.random(); // mais rápidas: entre 1s e 2s
+    Object.assign(drop.style, {
+      left: `${startX}px`,
+      top: `-30px`, // fora da tela, no topo
+      animationDelay: `${delay}s`,
+      animationDuration: `${duration}s`
+    });
+    rainOverlay.appendChild(drop);
+    setTimeout(() => drop.remove(), duration * 1000 + 500);
+  }
+}
+function startRainEffect() {
+  rainOverlay.innerHTML = "";
+  rainFilterOverlay.style.display = "block"; // mostra filtro azul
+  rainFilterOverlay.style.opacity = "1";
+  if (rainInterval) clearInterval(rainInterval);
+  rainInterval = setInterval(() => spawnRaindrops(100), 400);
+}
+function stopRainEffect() {
+  rainOverlay.innerHTML = "";
+  rainFilterOverlay.style.opacity = "0"; // esconde suavemente
+  setTimeout(() => {
+    rainFilterOverlay.style.display = "none";
+  }, 1000);
+  if (rainInterval) {
+    clearInterval(rainInterval);
+    rainInterval = null;
+  }
+}
+function toggleWeather() {
+  currentWeather = "rain";
+  startRainEffect();
+  if (rainTimeout) clearTimeout(rainTimeout);
+  rainTimeout = setTimeout(() => {
+    currentWeather = "clear";
+    stopRainEffect();
+  }, 1200000);
+}
+function placeCampfireObstacle() {
+  const id = `obstacle-campfire-${gridX}-${gridY}`;
+  if (document.getElementById(id)) return alert("🚫 Já existe uma fogueira aqui.");
+  const campfire = Object.assign(document.createElement("div"), {
+    className: "obstacle fogueira",
+    id,
+    onclick: () => highlightObstacle(gridX, gridY)
+  });
+  Object.assign(campfire.style, {
+    left: `${gridX * cellSize}px`,
+    top: `${gridY * cellSize}px`
+  });
+  campfire.dataset.clicks = "0";
+  campfire.dataset.type = "campfire";
+  const activeMap = hasDescendedByCave ? mapContentSecond : getActiveMapForTile(gridX, gridY);
+  activeMap.appendChild(campfire);
+  if (!campfirePositions.some(pos => pos.x === gridX && pos.y === gridY)) {
+    campfirePositions.push({ x: gridX, y: gridY });
+  }
+  if (hasDescendedByCave) {
+    propagateLightSecond(gridX, gridY, 3.5, 7);
+    updateGlobalLightSecond();
+    updateTileLightingSecond();
+  } else {
+    propagateLightAt(gridX, gridY, 3.5, 7);
+  }
+}
+let isDaySecond = false;
+let dayNightOverlaySecond = document.getElementById("day-night-overlay-second");
+if (!dayNightOverlaySecond) {
+  dayNightOverlaySecond = document.createElement("div");
+  dayNightOverlaySecond.id = "day-night-overlay-second";
+  Object.assign(dayNightOverlaySecond.style, {
+    position: "fixed",
+    top: "0",
+    left: "0",
+    width: "100%",
+    height: "100%",
+    pointerEvents: "none",
+    zIndex: "995",
+    transition: "background-color 2s ease",
+    display: "none",
+    backgroundColor: "rgba(0,0,0,0.8)"
+  });
+  document.body.appendChild(dayNightOverlaySecond);
+}
+function isSecondFloorTile(x, y) {
+  const t = terrainMap[`${x}-${y}`];
+  return t === "deepwater" || t === "caverna";
+}
+function updateSecondFloorOverlayVisibility() {
+  const onSecond = isSecondFloorTile(gridX, gridY);
+  dayNightOverlaySecond.style.display = onSecond ? "block" : "none";
+  updateGlobalLightSecond();
+  updateTileLightingSecond();
+}
+function toggleDayNight() {
+  isDay = !isDay;
+  dayNightOverlay.style.backgroundColor = isDay ? "rgba(0,0,0,0.2)" : "rgba(0,0,0,0.8)";
+  updateVignetteVisibility();
+  updateGlobalLight();
+  updateTileLighting();
+  if (!isDay) refreshAllCampfires();
+}
+function updateGlobalLight() {
+  const ambient = isDay ? 0.8 : 0.1;
+  for (let x = 0; x < mapCols; x++) {
+    for (let y = 0; y < mapRows; y++) {
+      const key = `${x}-${y}`;
+      if (!lightMap[key] || lightMap[key] < ambient) lightMap[key] = ambient;
+    }
+  }
+}
+function propagateLight(x, y, intensity = 0.8, radius = 4) {
+  const ambient = isDay ? 0.8 : 0.1;
+  for (let dx = -radius; dx <= radius; dx++) {
+    for (let dy = -radius; dy <= radius; dy++) {
+      const dist = Math.hypot(dx, dy);
+      if (dist > radius) continue;
+      const key = `${x + dx}-${y + dy}`;
+      const value = intensity * (1 - dist / radius);
+      if (value > ambient) lightMap[key] = Math.max(lightMap[key] || 0, value);
+    }
+  }
+}
+function propagateLightSecond(x, y, intensity = 2.0, radius = 4) {
+  const ambient = isDaySecond ? 0.25 : 0.08;
+  for (let dx = -radius; dx <= radius; dx++) {
+    for (let dy = -radius; dy <= radius; dy++) {
+      const dist = Math.hypot(dx, dy);
+      if (dist > radius) continue;
+      const key = `${x + dx}-${y + dy}`;
+      const falloff = 1 - Math.pow(dist / radius, 2);
+      const value = Math.max(0, intensity * falloff);
+      const candidate = Math.max(ambient, value);
+      lightMapSecond[key] = Math.max(lightMapSecond[key] || 0, candidate);
+    }
+  }
+}
+function propagateLightAt(x, y, intensity = 2.0, radius = 4) {
+  if (isSecondFloorTile(x, y)) {
+    propagateLightSecond(x, y, intensity, radius);
+    updateGlobalLightSecond();
+    updateTileLightingSecond();
+  } else {
+    propagateLight(x, y, intensity, radius);
+    updateGlobalLight();
+    updateTileLighting();
+  }
+}
+const lightMapSecond = {};
+function updateGlobalLightSecond() {
+  const ambient = isDaySecond ? 0.25 : 0.08; // sempre mais escuro que o 1º andar
+  for (let x = 0; x < mapCols; x++) {
+    for (let y = 0; y < mapRows; y++) {
+      const key = `${x}-${y}`;
+      const current = lightMapSecond[key] || 0;
+      lightMapSecond[key] = Math.max(current, ambient);
+    }
+  }
+}
+function updateTileLighting() {
+  for (let x = 0; x < mapCols; x++) {
+    for (let y = 0; y < mapRows; y++) {
+      const key = `${x}-${y}`;
+      const tile = document.getElementById(`terrain-${key}`);
+      if (!tile) continue;
+      tile.style.filter = isDay ? "" : `brightness(${Math.max(0.05, (lightMap[key] || 0) / 8)})`;
+    }
+  }
+}
+function updateTileLightingSecond() {
+  for (let x = 0; x < mapCols; x++) {
+    for (let y = 0; y < mapRows; y++) {
+      const key = `${x}-${y}`;
+      const tileSecond = document.getElementById(`terrain-${key}-second`);
+      if (!tileSecond) continue;
+      const lvl = lightMapSecond[key] || 0;
+      const brightness = Math.max(0.06, lvl / 4); // mapeamento mais brilhante
+      tileSecond.style.filter = `brightness(${brightness})`;
+    }
+  }
+}
+function getMouseTile(e) {
+  const rect = mapContent.getBoundingClientRect();
+  const zoom = currentZoom || 1;
+  return {
+    x: Math.floor((e.clientX - rect.left) / (zoom * cellSize)),
+    y: Math.floor((e.clientY - rect.top) / (zoom * cellSize))
+  };
+}
+setInterval(toggleWeather, 600000); // ⏱️ Alterna o clima a cada 10 minutos
+dayNightOverlay = document.createElement("div");
+dayNightOverlay.style.position = "fixed";
+dayNightOverlay.style.display = "none";
+dayNightOverlay.style.zIndex = "999";
+dayNightOverlay.style.transition = "background-color 2s ease";
+document.body.appendChild(dayNightOverlay);
+function placeTerrain(type) {
+  const key = `${gridX}-${gridY}`;
+  if (terrainMap[key]) return;
+  const tile = document.createElement("div");
+  tile.id = `terrain-${key}`;
+  tile.style.position = "absolute";
+  tile.style.left = `${gridX * cellSize}px`;
+  tile.style.top = `${gridY * cellSize}px`;
+  switch (type) {
+    case "water":
+      tile.className = "tile water";
+      break;
+    case "deepwater":
+      tile.className = "tile deepwater";
+      break;
+    case "sand":
+      tile.className = "tile sand";
+      break;
+    case "grass":
+      tile.className = "tile grass";
+      break;
+    case "dirt":
+      tile.className = "tile dirt";
+      break;
+    case "snow":
+      tile.className = "tile snow";
+      break;
+    case "smoothstone":
+      tile.className = "tile smoothstone";
+      break;
+    case "caverna": // ✅ novo tipo
+      tile.className = "tile caverna";
+      break;
+    default:
+      tile.className = "tile grass";
+  }
+  mapContent.appendChild(tile);
+  terrainMap[key] = type;
+}
+mapContent.addEventListener("click", (e) => {
+  if (selectedItemIndex === null) return;
+  const item = backpackItems[selectedItemIndex];
+  const { x, y } = getMouseTile(e);
+  const key = `${x}-${y}`;
+  if (item === "tabua") {
+  const id = `obstacle-plank-${x}-${y}`;
+  if (document.getElementById(id)) return;
+  const plank = document.createElement("div");
+  plank.className = "obstacle plank";
+  plank.id = id;
+  plank.style.left = `${x * cellSize}px`;
+  plank.style.top = `${y * cellSize}px`;
+  plank.dataset.clicks = "0";
+  plank.dataset.type = "plank";
+  plank.dataset.x = x;
+  plank.dataset.y = y;
+  plank.onclick = () => incrementObstacleClicks(id);
+  mapContent.appendChild(plank);
+  updatePlankTexture(x, y);
+  updatePlankTexture(x, y - 1);
+  updatePlankTexture(x, y + 1);
+  backpackItems.splice(selectedItemIndex, 1);
+  selectedItemIndex = null;
+  updateBackpackUIFloating();
+  updateQuickbar();
+  return;
+}
+if (item === "pá") {
+  const tile = document.getElementById(`terrain-${key}`);
+  if (tile && terrainMap[key] && terrainMap[key] !== "water" && terrainMap[key] !== "deepwater") {
+    tile.className = "tile smoothstone";
+    tile.style.opacity = "1";
+    terrainMap[key] = "smoothstone";
+  } else {
+  }
+  return;
+}
+});
+function removeTerrain() {
+  const key = `${gridX}-${gridY}`;
+  const tile = document.getElementById(`terrain-${key}`);
+  if (tile) {
+    tile.remove();
+    delete terrainMap[key];
+    alert("Terreno removido!");
+  } else {
+    alert("Não há terreno aqui.");
+  }
+}
+document.addEventListener("keydown", (e) => {
+  const key = e.key.toLowerCase();
+  // 🔫 Barra de espaço
+  if (e.code === "Space") {
+    e.preventDefault();
+    if (lastHighlightedObstacle) {
+      const id = lastHighlightedObstacle.id;
+      obstacleSpaceClicks[id] = (obstacleSpaceClicks[id] || 0) + 1;
+      const el = document.getElementById(id);
+      if (el) {
+        el.dataset.clicks = `${obstacleSpaceClicks[id]}`;
+        incrementObstacleClicks(id);
+      }
+    }
+    if (canAttackWithSpace) {
+      let atacou = false;
+      if (lastHighlightedEntity) {
+        const idHL = lastHighlightedEntity.id;
+        if (idHL === "boss" && boss) {
+          damageEntity(boss, 1, true);
+          atacou = true;
+        } else if (enemies[idHL]) {
+          damageEntity(enemies[idHL], 1, false);
+          atacou = true;
+        }
+      }
+      if (!atacou) {
+        for (const id in enemies) {
+          const e2 = enemies[id];
+          if (Math.abs(gridX - e2.x) + Math.abs(gridY - e2.y) <= 1) {
+            damageEntity(e2, 1, false);
+            atacou = true;
+            break;
+          }
+        }
+        if (!atacou && boss && Math.abs(gridX - boss.x) + Math.abs(gridY - boss.y) <= 1) {
+          damageEntity(boss, 1, true);
+        }
+      }
+      canAttackWithSpace = false;
+      setTimeout(() => (canAttackWithSpace = true), 1000);
+    }
+    return;
+  }
+  // ==== [Movimentação AWSD (inalterado exceto highlight reset)] ====
+  const moves = { w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0] };
+  if (!(key in moves)) return;
+  if (isMoving) return;
+  const [dx, dy] = moves[key];
+  const newX = gridX + dx;
+  const newY = gridY + dy;
+  const keyPos = `${newX}-${newY}`;
+  character.classList.remove("up", "down", "left", "right");
+  if (Math.abs(dx) > Math.abs(dy)) {
+    setCharacterDirection(dx, dy, true);
+    setCharacterDirection(0, 0, false);
+  } else {
+    character.classList.add(dy > 0 ? "down" : "up");
+  }
+  if (isBlocked(newX, newY)) { highlightObstacle(newX, newY); return; }
+  if (isOccupied(newX, newY)) { highlightEntity(newX, newY); return; }
+  if (!terrainMap[keyPos]) return;
+  if (lastHighlightedObstacle) lastHighlightedObstacle.style.boxShadow = "";
+  if (lastHighlightedEntity) lastHighlightedEntity.style.boxShadow = "";
+  lastHighlightedObstacle = null;
+  lastHighlightedEntity = null;
+  movementSpeed = 5;
+  startMovement([{ x: newX, y: newY }]);
+  checkEnterSecondFloor();
+});
+function startFollowing(kind, id) {
+  stopFollowing();
+  followState.active = true;
+  followState.kind = kind;
+  followState.id = id;
+  const replanIntervalMs = 200;
+  followState.timer = setInterval(() => {
+    const pos = getFollowTargetPosition();
+    if (!pos) { stopFollowing(); return; }
+    const { x: tx, y: ty } = pos;
+    if (Math.abs(gridX - tx) + Math.abs(gridY - ty) <= 1) return;
+    const adj = findAdjacentWalkableTarget(tx, ty);
+    if (adj) moveToTile(adj.x, adj.y);
+  }, replanIntervalMs);
+  followState.attackTimer = setInterval(() => {
+    if (!followState.active) return;
+    if (followState.kind === "enemy") {
+      const e = enemies[followState.id];
+      damageEntity(e, playerDamage, false);
+    } else if (followState.kind === "boss") {
+      damageEntity(boss, playerDamage, true);
+    }
+  }, 1000);
+}
+function placePlankObstacle() {
+  const id = `obstacle-plank-${gridX}-${gridY}`;
+  if (document.getElementById(id)) return;
+  const plank = document.createElement("div");
+  plank.className = "obstacle plank";
+  plank.id = id;
+  plank.onclick = () => highlightObstacle(gridX, gridY);
+  plank.style.left = `${gridX * cellSize}px`;
+  plank.style.top = `${gridY * cellSize}px`;
+  plank.style.backgroundImage = "url('plank.jpeg.png')";
+  plank.style.backgroundSize = "cover";
+  plank.dataset.clicks = "0";
+  plank.dataset.type = "plank";
+  plank.dataset.orientation = "horizontal";
+  mapContent.appendChild(plank);
+  updatePlankTexture(gridX, gridY);
+  updatePlankTexture(gridX, gridY - 1);
+  updatePlankTexture(gridX, gridY + 1);
+}
+function updatePlankTexture(x, y) {
+  const current = document.getElementById(`obstacle-plank-${x}-${y}`);
+  if (!current) return;
+  const above = document.getElementById(`obstacle-plank-${x}-${y - 1}`);
+  const below = document.getElementById(`obstacle-plank-${x}-${y + 1}`);
+  const hasVerticalNeighbor = !!above || !!below;
+  if (hasVerticalNeighbor) {
+    current.style.backgroundImage = "url('plank2.jpeg.png')";
+    current.dataset.orientation = "vertical";
+    if (above) {
+      above.style.backgroundImage = "url('plank2.jpeg.png')";
+      above.dataset.orientation = "vertical";
+    }
+    if (below) {
+      below.style.backgroundImage = "url('plank2.jpeg.png')";
+      below.dataset.orientation = "vertical";
+    }
+    let last = current;
+    let nextY = y;
+    while (true) {
+      const next = document.getElementById(`obstacle-plank-${x}-${nextY + 1}`);
+      if (!next) break;
+      next.style.backgroundImage = "url('plank2.jpeg.png')";
+      next.dataset.orientation = "vertical";
+      last = next;
+      nextY++;
+    }
+    if (last) {
+      last.style.backgroundImage = "url('plank.jpeg.png')";
+      last.dataset.orientation = "horizontal";
+    }
+  } else {
+    current.style.backgroundImage = "url('plank.jpeg.png')";
+    current.dataset.orientation = "horizontal";
+  }
+}
+function incrementNatureClicks(el) {
+  if (!el) return;
+  const clicks = parseInt(el.dataset.clicks || "0", 10) + 1;
+  el.dataset.clicks = `${clicks}`;
+  if (clicks >= 10) {
+    const x = parseInt(el.dataset.x, 10);
+    const y = parseInt(el.dataset.y, 10);
+    const type = el.dataset.type;
+    const lootMap = { tree: "madeira", largetree: "madeira", rock: "pedra", plank: "tabua" };
+    const loot = lootMap[type];
+    if (loot) dropItem(x, y, loot, el.dataset.floor);
+    el.remove();
+    delete obstacleSpaceClicks[el.id];
+    if (lastHighlightedObstacle?.id === el.id) lastHighlightedObstacle = null;
+  } else {
+    el.style.boxShadow = "0 0 6px 2px yellow";
+    setTimeout(() => (el.style.boxShadow = ""), 200);
+  }
+}
+const OBSTACLE_TYPES = [
+  "tree", "largetree", "cacto", "rock", "plank",
+  "campfire", "bigorna", "jarro", "estande_de_livros",
+  "caldeirao", "porta", "bau", "banner", "fornalha", "bancada"
+];
+function checkObstacle(x, y, onSecond = false, genericCheck = false) {
+  const suffix = onSecond ? "-second" : "";
+  if (genericCheck && document.getElementById(`obstacle-${x}-${y}${suffix}`)) return true;
+  for (const type of OBSTACLE_TYPES) {
+    if (document.getElementById(`obstacle-${type}-${x}-${y}${suffix}`)) return true;
+  }
+  return false;
+}
+function isBlocked(x, y) {
+  if (adminMode) return false;
+  const onSecond = hasDescendedByCave;
+  return checkObstacle(x, y, onSecond, true); // genérico + tipos
+}
+function hasObstacle(x, y) {
+  const key = `${x}-${y}`;
+  const checkTypes = ["tree", "largetree", "cacto", "rock", "plank"];
+  for (const type of checkTypes) {
+    if (document.getElementById(`obstacle-${type}-${key}`)) return true;
+  }
+  return false;
+}
+function isOccupied(x, y) {
+  if (gridX === x && gridY === y) return true;
+  if (boss && boss.x === x && boss.y === y) return true;
+  for (const id in enemies) {
+  const e = enemies[id];
+    if (e.x === x && e.y === y) return true;
+  }
+  return false;
+}
+function removeObstacle() {
+  const id = `obstacle-${gridX}-${gridY}`;
+  const obstacle = document.getElementById(id);
+  if (obstacle) {
+    obstacle.remove();
+    alert("🧹 Obstáculo removido!");
+  } else {
+    alert("Não há obstáculo aqui.");
+  }
+}
+function dropItem(x, y, type = "fruta", floor = "first") {
+  const imageMap = {
+    fruta: "item_maçã.jpeg.png",
+    poção: "item_poção.jpeg.png",
+    pedra: "item_pedra.jpeg.png",
+    madeira: "item_madeira.jpeg.png",
+    machado: "item_machado.jpeg.png",
+    lagosta: "item_lagosta.jpeg.png",
+    tabua: "plank.jpeg.png",
+    pá: "item_pá.jpeg.png",
+    picareta: "item_picareta.jpeg.png"
+  };
+  const item = document.createElement("div");
+  item.className = "item-drop";
+  item.style.position = "absolute";
+  item.style.left = `${x * cellSize}px`;
+  item.style.top = `${y * cellSize}px`;
+  item.style.cursor = "pointer";
+  item.style.zIndex = "4";
+  const img = document.createElement("img");
+  img.src = imageMap[type] || "slime.jpeg.png";
+  img.alt = type;
+  img.style.width = "32px";
+  img.style.height = "32px";
+  img.style.pointerEvents = "none";
+  item.appendChild(img);
+  item.onclick = () => {
+    if (backpackItems.length >= 8) {
+      alert("🎒 Mochila cheia!");
+      return;
+    }
+    backpackItems.push(type);
+    updateBackpackUI();
+    updateBackpackUIFloating();
+    updateQuickbar();
+    item.remove();
+  };
+  const activeMap = floor === "second" ? mapContentSecond : mapContent;
+  activeMap.appendChild(item);
+  setTimeout(() => {
+    if (item.parentElement) item.remove();
+  }, 60000);
+}
+function placeNature(type) {
+  const suffix = hasDescendedByCave ? "-second" : "";
+  const id = `obstacle-${type}-${gridX}-${gridY}${suffix}`;
+  if (document.getElementById(id)) return;
+  const key = `${gridX}-${gridY}`;
+  const terrain = hasDescendedByCave ? terrainSecondMapLocal[key] : terrainMap[key];
+  if (terrain === "caverna") {
+    return;
+  }
+  const element = document.createElement("div");
+  element.className = `obstacle ${type}`;
+  element.id = id;
+  element.style.left = `${gridX * cellSize}px`;
+  element.style.top = `${gridY * cellSize}px`;
+  element.dataset.clicks = "0";
+  element.dataset.type = type;
+  element.dataset.x = gridX;
+  element.dataset.y = gridY;
+  element.dataset.floor = hasDescendedByCave ? "second" : "first";
+  element.onclick = () => incrementNatureClicks(element);
+  const activeMap = hasDescendedByCave ? mapContentSecond : mapContent;
+  activeMap.appendChild(element);
+}
+function updateEnemyPosition(id) {
+  const { x, y, element } = enemies[id];
+  element.style.left = `${x * cellSize}px`;
+  element.style.top = `${y * cellSize}px`;
+}
+function lobisomemAttack(enemy) {
+  if (Math.abs(gridX - enemy.x) + Math.abs(gridY - enemy.y) > 1) return;
+  hp -= 10;
+  if (hp <= 0) showRespawnScreen();
+  updateHUD();
+}
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") stopFollowing();
+});
+mapContent.addEventListener("click", (e) => {
+  const target = e.target;
+  if (!target.classList.contains("enemy")) {
+  }
+});
+let playerDamage = 1; // valor base, pode ser ajustado conforme nível/arma
+function updateBossPosition() {
+  if (!boss) return;
+  boss.element.style.left = `${boss.x * cellSize}px`;
+  boss.element.style.top = `${boss.y * cellSize - 25}px`;   // desloca 5px para cima
+}
+function updateBossHUD() {
+  if (!boss) return;
+  const percent = Math.max(0, boss.hp / boss.maxHp * 100);
+  document.getElementById("boss-hp-bar").style.width = `${percent}%`;
+}
+function stopFollowing() {
+  followState.active = false;
+  followState.kind = null;
+  followState.id = null;
+  followState.lastAdj = null;
+  if (followState.timer) {
+    clearInterval(followState.timer);
+    followState.timer = null;
+  }
+  if (followState.attackTimer) {
+    clearInterval(followState.attackTimer);
+    followState.attackTimer = null;
+  }
+}
+function createEnemy(x, y, type = "zumbi") {
+  const terrain = terrainMap[`${x}-${y}`];
+  const invalid = type === "lagosta" ? terrain !== "deepwater" : ["water", "deepwater"].includes(terrain);
+  if (invalid || hasObstacle(x, y)) return;
+  const id = `enemy${++enemyCount}`;
+  const enemy = document.createElement("div");
+  enemy.className = `enemy ${type}`;
+  enemy.id = id;
+  const hpFill = document.createElement("div");
+  hpFill.className = "enemy-hp-bar";
+  const hpBar = document.createElement("div");
+  hpBar.className = "enemy-hp";
+  hpBar.appendChild(hpFill);
+  enemy.appendChild(hpBar);
+  (type === "lagosta" ? mapContentSecond : mapContent).appendChild(enemy);
+  const typeImages = {
+    zumbi: "zumbi.jpeg.gif",
+    lobisomem: "lobisomem.jpeg.png",
+    lagosta: "lagosta.jpeg.gif",
+    vaca: "cow.jpeg.gif",
+    grifo: "cow.jpeg.png"
+  };
+  const imagePath = typeImages[type] || "slime.jpeg.png";
+  enemy.style.backgroundImage = `url('${imagePath}')`;
+  enemy.style.backgroundSize = "cover";
+  const baseHp = type === "golem" ? 80 : 30;
+  enemies[id] = {
+    id,  
+    x, y,
+    hp: baseHp,
+    maxHp: baseHp,
+    element: enemy,
+    hpFill,
+    type,
+    behavior: type === "vaca" ? "passive" : ["lobisomem","grifo","arqueiro","mago"].includes(type) ? type : "normal",
+    islobisomem: type === "lobisomem"
+  };
+  updateEnemyPosition(id);
+  enableClickOnEntityElement(enemy);
+  enemy.onclick = () => startFollowing("enemy", id);
+}
+function createSeededRNG(seed) {
+  let s = seed;
+  return function () {
+    s = Math.sin(s) * 10000;
+    return s - Math.floor(s);
+  };
+}
+function spawnBoss(x, y, name = "Dragão", hpValue = 500) {
+  const bossElement = Object.assign(document.createElement("div"), {
+    className: "enemy",
+    id: "boss"
+  });
+  Object.assign(bossElement.style, {
+    width: "90px",
+    height: "90px",
+    borderRadius: "0%",
+    backgroundImage: "url('dragon.jpeg.png')",
+    backgroundSize: "cover"
+  });
+  mapContent.appendChild(bossElement);
+  boss = {
+    id: "boss",      // ✅
+    x, y,
+    hp: hpValue,
+    maxHp: hpValue,  // ✅
+    element: bossElement,
+    name
+  };
+  document.getElementById("boss-name").textContent = name;
+  document.getElementById("boss-hud").style.display = "flex";
+  updateBossPosition();
+  updateBossHUD();
+  enableClickOnEntityElement(bossElement);
+  bossElement.onclick = () => startFollowing("boss", "boss");
+}
+function damageEntity(entity, amount, isBoss = false) {
+  if (!entity) return;
+  const dist = Math.abs(gridX - entity.x) + Math.abs(gridY - entity.y);
+  if (dist > 1 || entity.hp <= 0) return;
+  entity.hp -= amount;
+  if (isBoss) {
+    updateBossHUD();
+  } else if (entity.hpFill) {
+  const maxHp = entity.maxHp || 30;
+    entity.hpFill.style.width = `${Math.max(0, (entity.hp / maxHp) * 100)}%`;
+  }
+  entity.element.style.filter = "brightness(200%)";
+  setTimeout(() => entity.element.style.filter = "", 200);
+  if (entity.hp <= 0) {
+    if (isBoss) {
+      entity.element.remove();
+      boss = null;
+      document.getElementById("boss-hud").style.display = "none";
+      xp += 100;
+      ["madeira", "pedra"].forEach((item, i) => dropItem(entity.x + i, entity.y, item));
+      alert("🏆 Você derrotou o Boss!");
+    } else {
+      const dropTable = { zumbi: "fruta", lagosta: "lagosta" }; // Drops de entidades :D
+      const drop = dropTable[entity.type];
+      if (drop) dropItem(entity.x, entity.y, drop);
+      entity.element.remove();
+      const key = entity.id || Object.keys(enemies).find(k => enemies[k].element === entity.element);
+      if (key) delete enemies[key];
+      xp += 20;
+    }
+    if (xp >= level * 50) {
+      level++;
+      xp = 0;
+      alert(`🎉 Você subiu para o nível ${level}!`);
+    }
+    updateHUD();
+    stopFollowing();
+  }
+}
+let hasDescendedByCave = false;
+function centerMapOn(px, py) {
+  const tileKey = `${Math.floor(px / cellSize)}-${Math.floor(py / cellSize)}`;
+  const terrain = terrainMap[tileKey];
+  const isSecondFloor = hasDescendedByCave || terrain === "deepwater" || terrain === "caverna";
+  const [activeMap, inactiveMap] = isSecondFloor ? [mapContentSecond, mapContent] : [mapContent, mapContentSecond];
+  activeMap.style.display = "block";
+  inactiveMap.style.display = "none";
+  activeMap.style.transformOrigin = "0 0";
+  const offsetX = window.innerWidth / 2 - px * currentZoom;
+  const offsetY = window.innerHeight / 2 - py * currentZoom;
+  activeMap.style.transform = `scale(${currentZoom}) translate(${offsetX / currentZoom}px, ${offsetY / currentZoom}px)`;
+  const character = document.querySelector(".character");
+  if (character.parentElement !== activeMap) activeMap.appendChild(character);
+}
+function updatePosition() { // Observação: o Player ao descer a caverna pelo cursor ele consegue retornar a superficie, Diferente de AWSD
+  const offsetX = gridX * cellSize;
+  const offsetY = gridY * cellSize;
+  const isSecondFloor = hasDescendedByCave || isSecondFloorTile(gridX, gridY);
+  const [activeMap, inactiveMap] = isSecondFloor ? [mapContentSecond, mapContent] : [mapContent, mapContentSecond];
+  Object.assign(activeMap.style, {
+    display: "block",
+    transform: `translate(${window.innerWidth / 2 - offsetX}px, ${window.innerHeight / 2 - offsetY}px) scale(${currentZoom})`
+  });
+  inactiveMap.style.display = "none";
+  if (character.parentElement !== activeMap) activeMap.appendChild(character);
+  Object.assign(character.style, { left: `${offsetX}px`, top: `${offsetY}px` });
+}
+function updateCharacterVisual(px, py) {
+  Object.assign(character.style, {
+    left: `${px + 0}px`,
+    top: `${py + 0}px`
+  });
+}
+let animationFrameId = null;
+let lastHighlightedObstacle = null;
+let lastHighlightedEntity = null;
+let obstacleSpaceClicks = {};
+let targetX = null;
+let targetY = null;
+let canAttackWithSpace = true;
+const followState = { active: false, kind: null, id: null, timer: null, attackTimer: null };
+function getFollowTargetPosition() {
+  if (followState.kind === "enemy") {
+    const e = enemies[followState.id];
+    return e ? { x: e.x, y: e.y } : null;
+  }
+  if (followState.kind === "boss") {
+    return boss ? { x: boss.x, y: boss.y } : null;
+  }
+  return null;
+}
+mapContent.addEventListener("click", (e) => {
+  const { x, y } = getMouseTile(e);
+  const dx = x - gridX;
+  const dy = y - gridY;
+  character.classList.remove("up", "down", "left", "right");
+  if (Math.abs(dx) > Math.abs(dy)) {
+    character.classList.add(dx > 0 ? "right" : "left");
+  } else {
+    character.classList.add(dy > 0 ? "down" : "up");
+  }
+  if (isBlocked(x, y)) { highlightObstacle(x, y); return; }
+  if (isOccupied(x, y)) { highlightEntity(x, y); return; }
+  if (lastHighlightedObstacle) lastHighlightedObstacle.style.boxShadow = "";
+  if (lastHighlightedEntity) lastHighlightedEntity.style.boxShadow = "";
+  lastHighlightedObstacle = null;
+  lastHighlightedEntity = null;
+  targetX = x;
+  targetY = y;
+  moveToTile(x, y);
+});
+let pathQueue = [];
+let isMoving = false;
+let movementSpeed = 5; // pixels por frame (ajuste para suavidade)
+function moveToTile(targetX, targetY) {
+  cancelAnimation();
+  resetMovementState();
+  const directions = [ [1,0], [-1,0], [0,1], [0,-1] ];
+  const openSet = [{ x: gridX, y: gridY, path: [] }];
+  const visited = new Set([`${gridX}-${gridY}`]);
+  while (openSet.length) {
+  const { x, y, path } = openSet.shift();
+    if (x === targetX && y === targetY) return startMovement(path);
+    for (const [dx, dy] of directions) {
+      const nx = x + dx, ny = y + dy, key = `${nx}-${ny}`;
+      if (
+        !visited.has(key) &&
+        terrainMap[key] &&
+        !isBlocked(nx, ny) &&
+        !isOccupied(nx, ny)
+      ) {
+        visited.add(key);
+        openSet.push({ x: nx, y: ny, path: [...path, { x: nx, y: ny }] });
+      }
+    }
+  }
+}
+function cancelAnimation() {
+  if (animationFrameId !== null) {
+    cancelAnimationFrame(animationFrameId);
+    animationFrameId = null;
+  }
+}
+function resetMovementState() {
+  pathQueue = [];
+  isMoving = false;
+}
+function startMovement(path) {
+  if (!path.length) return;
+  pathQueue = path;
+  isMoving = true;
+  currentPixelX = gridX * cellSize;
+  currentPixelY = gridY * cellSize;
+  const next = pathQueue.shift();
+  gridX = next.x;
+  gridY = next.y;
+  targetPixelX = gridX * cellSize;
+  targetPixelY = gridY * cellSize;
+  animationFrameId = requestAnimationFrame(animateSmoothMovement);
+}
+  const expandedDirections = {
+  left: false,
+  right: false,
+  top: false,
+  bottom: false
+};
+function checkEnterSecondFloor() {
+  const key = `${gridX}-${gridY}`;
+  const terrain = terrainMap[key];
+  if (terrain === "caverna" && !hasDescendedByCave) {
+    hasDescendedByCave = true;
+  }
+}
+function checkAndExpandMapIfAtEdge() {
+  const margin = 2;
+  const seedOffset = Math.floor(Math.random() * 100000);
+  ["left", "right", "top", "bottom"].forEach(dir => {
+  const edge = {
+    left: gridX <= margin,
+    right: gridX >= mapCols - margin - 1,
+    top: gridY <= margin,
+    bottom: gridY >= mapRows - margin - 1
+  };
+  if (edge[dir] && !expandedDirections[dir]) {
+    expandedDirections[dir] = true;
+    expandMap(dir, seedOffset);
+  }
+});
+}
+function expandMap(direction, seed) {
+  const offsetX = direction === "left" ? -mapCols : direction === "right" ? mapCols : 0;
+  const offsetY = direction === "top" ? -mapRows : direction === "bottom" ? mapRows : 0;
+  const rng = createSeededRNG(seed);
+  const referenceElements = [];
+  for (let x = 0; x < mapCols; x++) {
+    for (let y = 0; y < mapRows; y++) {
+      const key = `${x}-${y}`;
+      referenceElements.push({
+        terrain: terrainMap[key],
+        tree: document.getElementById(`obstacle-tree-${x}-${y}`),
+        rock: document.getElementById(`obstacle-rock-${x}-${y}`)
+      });
+    }
+  }
+  referenceElements.forEach((ref, i) => {
+  const x = i % mapCols;
+  const y = Math.floor(i / mapCols);
+  const globalX = x + offsetX;
+  const globalY = y + offsetY;
+  const key = `${globalX}-${globalY}`;
+    terrainMap[key] = ref.terrain;
+  const createElement = (className, idSuffix) => {
+  const el = document.createElement("div");
+    el.className = className;
+    el.id = `${idSuffix}-${globalX}-${globalY}`;
+    el.style.left = `${globalX * cellSize}px`;
+    el.style.top = `${globalY * cellSize}px`;
+    el.style.position = "absolute";
+    mapContent.appendChild(el);
+};
+    createElement(`tile ${ref.terrain}`, "terrain");
+    if (ref.tree && rng() < 0.8) createElement("obstacle tree", "obstacle-tree");
+    if (ref.rock && rng() < 0.8) createElement("obstacle rock", "obstacle-rock");
+  });
+}
+function censorMessage(text) {
+  const blacklist = ['abacaxi', 'palavrão', 'nanismo', 'westo', 'catapimbas', 'proibido'];
+  blacklist.forEach(word => {
+  const regex = new RegExp(`\\b${word}\\b`, 'gi');
+    text = text.replace(regex, '[CENSURADO]');
+  });
+  return text;
+}
+function sendMessage(e) {
+  if (e.key !== "Enter") return;
+  const input = e.target;
+  const msg = input.value.trim();
+  if (!msg) return;
+  const chatBox = document.getElementById("chat-box");
+  appendChatMessage(`${playerName}: ${censorMessage(msg)}`, chatBox);
+  handleCommand(msg, chatBox);
+  input.value = "";
+}
+function appendChatMessage(text, container) {
+  const p = document.createElement("p");
+  p.textContent = text;
+  container.appendChild(p);
+  container.scrollTop = container.scrollHeight;
+}
+function handleCommand(msg, chatBox) {
+  const actions = {
+    "/adm": () => {
+      adminMode = true;
+      openEditor();
+      return "🛠️ Modo administrador ativado!";
+    },
+    "/admoff": () => {
+      adminMode = false;
+      closeEditor();
+      return "🛠️ Modo administrador desativado!";
+    },
+    "/weather": () => {
+      currentWeather = "rain";
+      startRainEffect();
+      updateVignetteVisibility();
+      return "🌧️ Clima alterado: Chuva ativada!";
+    },
+    "/weatheroff": () => {
+      currentWeather = "clear";
+      stopRainEffect();
+      updateVignetteVisibility();
+      return "☀️ Clima alterado: Chuva desativada!";
+    },
+    "/day": () => {
+  isDay = true;
+  dayNightOverlay.style.backgroundColor = "rgba(0,0,0,0.2)";
+  updateVignetteVisibility();
+  updateGlobalLight();
+  for (let x = 0; x < mapCols; x++) {
+    for (let y = 0; y < mapRows; y++) {
+    const key = `${x}-${y}`;
+    const tile = document.getElementById(`terrain-${key}`);
+      if (tile) tile.style.filter = "";
+    }
+  }
+  return "🌞 Dia ativado manualmente!";
+    },
+    "/night": () => {
+      isDay = false;
+      dayNightOverlay.style.backgroundColor = "rgba(0,0,0,0.8)";
+      updateVignetteVisibility();
+      updateGlobalLight();
+      updateTileLighting(); // aplica escurecimento
+      return "🌙 Noite ativada manualmente!";
+    }
+  };
+  if (msg in actions) appendChatMessage(actions[msg](), chatBox);
+}
+function openEditor() {
+  document.getElementById("editor-panel").style.display = "block";
+}
+function initPreviews() {
+  const ensure = (id, styles = {}) => {
+    let el = document.getElementById(id);
+    if (!el) {
+      el = document.createElement("div");
+      el.id = id;
+      Object.assign(el.style, {
+        position: "absolute",
+        width: `${cellSize}px`,
+        height: `${cellSize}px`,
+        pointerEvents: "none",
+        transform: "translate(-50%, -50%)",
+        display: "none",
+        zIndex: 999,
+        ...styles
+      });
+      mapContent.appendChild(el);
+    }
+    return el;
+  };
+  const movePreviewEl = ensure("move-preview", { zIndex: 900, backgroundSize: "cover" });
+  const plankPreview = ensure("plank-preview", { backgroundImage: "url('plank.jpeg.png')", backgroundSize: "cover" });
+  const shovelPreview = ensure("shovel-preview", { backgroundImage: "url('item_pá.jpeg.png')", backgroundSize: "cover" });
+  const pickaxePreview = ensure("pickaxe-preview", { backgroundSize: "contain" });
+  let raf = null;
+  let pending = null;
+  let cachedRect = null;
+  const updateCachedRect = () => {
+    const active = (mapContentSecond && mapContentSecond.style.display !== 'none') ? mapContentSecond : mapContent;
+    cachedRect = active.getBoundingClientRect();
+  };
+  window.addEventListener("resize", updateCachedRect);
+  updateCachedRect();
+  const toTile = (clientX, clientY) => {
+    if (!cachedRect) updateCachedRect();
+    const zoom = currentZoom || 1;
+    const x = Math.floor((clientX - cachedRect.left) / (zoom * cellSize));
+    const y = Math.floor((clientY - cachedRect.top) / (zoom * cellSize));
+    return { x, y };
+  };
+  const hideAll = () => {
+    [movePreviewEl, plankPreview, shovelPreview, pickaxePreview].forEach(el => el && (el.style.display = "none"));
+  };
+  const schedule = (evt) => {
+    pending = evt;
+    if (!raf) raf = requestAnimationFrame(run);
+  };
+  function run() {
+    raf = null;
+    if (!pending) return;
+    const { clientX, clientY } = pending;
+    pending = null;
+    const activeMap = (mapContentSecond && mapContentSecond.style.display !== 'none') ? mapContentSecond : mapContent;
+    [movePreviewEl, plankPreview, shovelPreview, pickaxePreview].forEach(el => {
+      if (el && el.parentElement !== activeMap) activeMap.appendChild(el);
+    });
+    cachedRect = activeMap.getBoundingClientRect();
+    const { x, y } = toTile(clientX, clientY);
+    if (x < 0 || y < 0 || x >= mapCols || y >= mapRows) {
+      hideAll();
+      return;
+    }
+    const validMove = !isBlocked(x, y) && !isOccupied(x, y) && !!terrainMap[`${x}-${y}`];
+    Object.assign(movePreviewEl.style, {
+      left: `${x * cellSize}px`,
+      top: `${y * cellSize}px`,
+      display: "block",
+      backgroundImage: validMove ? "url('cursor_vermelho.jpeg.png')" : "url('cursor_amarelo.jpeg.png')"
+    });
+    const item = selectedItemIndex !== null ? backpackItems[selectedItemIndex] : null;
+    if (item === "tabua") {
+      const exists = document.getElementById(`obstacle-plank-${x}-${y}`);
+      Object.assign(plankPreview.style, { left: `${x * cellSize}px`, top: `${y * cellSize}px`, display: "block", opacity: exists ? "0.2" : "0.5" });
+    } else plankPreview.style.display = "none";
+    if (item === "pá") {
+      const terrain = terrainMap[`${x}-${y}`];
+      const diggable = terrain && terrain !== "water" && terrain !== "deepwater";
+      Object.assign(shovelPreview.style, { left: `${x * cellSize}px`, top: `${y * cellSize}px`, display: "block", opacity: diggable ? "1" : "0.5" });
+    } else shovelPreview.style.display = "none";
+    if (item === "picareta") {
+      const terrain = terrainMap[`${x}-${y}`];
+      const diggable = !hasDescendedByCave && terrain === "smoothstone";
+      Object.assign(pickaxePreview.style, {
+        left: `${x * cellSize}px`,
+        top: `${y * cellSize}px`,
+        display: "block",
+        border: `2px dashed ${diggable ? "#4682B4" : "red"}`,
+        boxShadow: `0 0 8px ${diggable ? "#4682B4" : "red"}`,
+        opacity: diggable ? "1" : "0.5"
+      });
+    } else pickaxePreview.style.display = "none";
+  }
+  map.addEventListener("pointermove", schedule);
+  map.addEventListener("pointerleave", hideAll);
+  return {
+    stop() {
+      map.removeEventListener("pointermove", schedule);
+      map.removeEventListener("pointerleave", hideAll);
+      window.removeEventListener("resize", updateCachedRect);
+      hideAll();
+    }
+  };
+}
+initPreviews();
+const MOB_SPEED_PIXELS_PER_FRAME = 10.5;
+const MOB_SPEED_DIVISOR = 1000;
+const MOB_PAUSE_MIN_MS = 5000;
+const MOB_PAUSE_MAX_MS = 7000;
+const MOB_TARGET_RADIUS_MIN = 10;
+const MOB_TARGET_RADIUS_MAX = 15;
+const DIRECTIONS = [
+  [1, 0], [-1, 0], [0, 1], [0, -1]
+];
+function randomBetween(min, max) {
+  return min + Math.floor(Math.random() * (max - min + 1));
+}
+function getPauseTime() {
+  return performance.now() + MOB_PAUSE_MIN_MS + Math.random() * (MOB_PAUSE_MAX_MS - MOB_PAUSE_MIN_MS);
+}
+function initMobMovementState(entity) {
+  entity.pixelX = entity.x * cellSize;
+  entity.pixelY = entity.y * cellSize;
+  entity.moving = false;
+  entity.waitUntil = 0;
+  entity.pathQueue = [];
+}
+function getRandomTargetAround(entity) {
+  const radius = randomBetween(MOB_TARGET_RADIUS_MIN, MOB_TARGET_RADIUS_MAX);
+  return {
+    x: Math.max(0, Math.min(mapCols - 1, entity.x + Math.floor((Math.random() * 2 - 1) * radius))),
+    y: Math.max(0, Math.min(mapRows - 1, entity.y + Math.floor((Math.random() * 2 - 1) * radius)))
+  };
+}
+function isTerrainAvoidedFor(entity, x, y) {
+  const terrain = terrainMap[`${x}-${y}`];
+  return entity.type === "lagosta" ? terrain !== "deepwater" : ["water", "deepwater"].includes(terrain);
+}
+function findMobPath(entity, startX, startY, targetX, targetY) {
+  const queue = [{ x: startX, y: startY, path: [] }];
+  const visited = new Set([`${startX}-${startY}`]);
+  while (queue.length) {
+  const { x, y, path } = queue.shift();
+    if (x === targetX && y === targetY) return path;
+    for (const [dx, dy] of DIRECTIONS) {
+      const nx = x + dx, ny = y + dy, key = `${nx}-${ny}`;
+      if (!visited.has(key) && terrainMap[key] && !isBlocked(nx, ny) && !isOccupied(nx, ny) && !isTerrainAvoidedFor(entity, nx, ny)) {
+        visited.add(key);
+        queue.push({ x: nx, y: ny, path: [...path, { x: nx, y: ny }] });
+      }
+    }
+  }
+  return [];
+}
+function findAdjacentWalkableTarget(targetX, targetY) {
+  const dirs = [[1,0],[-1,0],[0,1],[0,-1]];
+  let best = null;
+  let bestDist = Infinity;
+  for (const [dx, dy] of dirs) {
+  const nx = targetX + dx;
+  const ny = targetY + dy;
+  const key = `${nx}-${ny}`;
+    if (!terrainMap[key]) continue;
+    if (isBlocked(nx, ny)) continue;
+    if (isOccupied(nx, ny)) continue;
+    const d = Math.abs(gridX - nx) + Math.abs(gridY - ny); // Manhattan
+    if (d < bestDist) {
+      bestDist = d;
+      best = { x: nx, y: ny };
+    }
+  }
+  return best;
+}
+function planMobPath(entity) {
+  const target = getRandomTargetAround(entity);
+  const path = findMobPath(entity, entity.x, entity.y, target.x, target.y);
+  if (!path.length) {
+    entity.moving = false;
+    entity.waitUntil = getPauseTime();
+    return;
+  }
+  entity.target = target;
+  entity.pathQueue = path;
+  entity.moving = true;
+}
+function startMobStep(entity) {
+  if (!entity.pathQueue || !entity.pathQueue.length) {
+    entity.moving = false;
+    entity.waitUntil = getPauseTime();
+    entity.targetPixelX = entity.targetPixelY = entity.nextTileX = entity.nextTileY = undefined;
+    return;
+  }
+  const next = entity.pathQueue.shift();
+  entity.nextTileX = next.x;
+  entity.nextTileY = next.y;
+  entity.targetPixelX = next.x * cellSize;
+  entity.targetPixelY = next.y * cellSize;
+}
+function animateSmoothMovement() {
+  if (!isMoving) return;
+  const dx = targetPixelX - currentPixelX;
+  const dy = targetPixelY - currentPixelY;
+  const dist = Math.hypot(dx, dy);
+  setCharacterDirection(dx, dy, true);
+  if (dist < movementSpeed) {
+    currentPixelX = targetPixelX;
+    currentPixelY = targetPixelY;
+    updateCharacterVisual(currentPixelX, currentPixelY);
+    centerMapOn(currentPixelX, currentPixelY);
+    if (!pathQueue.length) {
+      isMoving = false;
+      setCharacterDirection(0, 0, false);
+      animationFrameId = null;
+      checkAndExpandMapIfAtEdge();
+      return;
+    }
+    const next = pathQueue.shift();
+    gridX = next.x;
+    gridY = next.y;
+    targetPixelX = gridX * cellSize;
+    targetPixelY = gridY * cellSize;
+  } else {
+    const angle = Math.atan2(dy, dx);
+    currentPixelX += Math.cos(angle) * movementSpeed;
+    currentPixelY += Math.sin(angle) * movementSpeed;
+    updateCharacterVisual(currentPixelX, currentPixelY);
+    centerMapOn(currentPixelX, currentPixelY);
+  }
+  animationFrameId = requestAnimationFrame(animateSmoothMovement);
+}
+function animateMob(entity) {
+  if (entity.waitUntil && performance.now() < entity.waitUntil) return;
+  if (!entity.moving) {
+    planMobPath(entity);
+    if (!entity.moving) return;
+    startMobStep(entity);
+  }
+  if (entity.targetPixelX == null || entity.targetPixelY == null) {
+    startMobStep(entity);
+    return;
+  }
+  const dx = entity.targetPixelX - entity.pixelX;
+  const dy = entity.targetPixelY - entity.pixelY;
+  const dist = Math.hypot(dx, dy);
+  const effectiveSpeed = MOB_SPEED_PIXELS_PER_FRAME / 3;
+  if (dist < effectiveSpeed) {
+    entity.pixelX = entity.targetPixelX;
+    entity.pixelY = entity.targetPixelY;
+    entity.x = entity.nextTileX;
+    entity.y = entity.nextTileY;
+    startMobStep(entity);
+  } else {
+  const angle = Math.atan2(dy, dx);
+    entity.pixelX += Math.cos(angle) * effectiveSpeed;
+    entity.pixelY += Math.sin(angle) * effectiveSpeed;
+  }
+  entity.element.style.left = `${entity.pixelX}px`;
+  entity.element.style.top = `${entity.pixelY}px`;
+}
+function updateMobsRAF() {
+  Object.entries(enemies).forEach(([id, entity]) => {
+    if (entity.pixelX == null) initMobMovementState(entity);
+    animateMob(entity);
+    updateEnemyPosition(id);
+  });
+  if (boss) {
+    if (boss.pixelX == null) initMobMovementState(boss);
+    animateMob(boss);
+    updateBossPosition();
+    if (Math.abs(gridX - boss.x) + Math.abs(gridY - boss.y) <= 1) {
+      hp -= 20;
+      updateHUD();
+      if (hp <= 0) showRespawnScreen();
+    }
+    if (Math.random() < 0.02) {
+      Array.from({ length: 7 }).forEach((_, i) => setTimeout(shootFireballFromBoss, i * 300));
+    }
+  }
+  requestAnimationFrame(updateMobsRAF);
+}
+requestAnimationFrame(updateMobsRAF);
+gridX = Math.floor(mapCols / 2);
+gridY = Math.floor(mapRows / 2);
+let currentSeed = Math.floor(Math.random() * 100000);
+document.getElementById("seed-display").textContent = currentSeed;
+generateTerrainGrid(64, 64, currentSeed); // ← Aqui é onde você coloca!
+generateSecondFloor();
+updatePosition();
+dayNightOverlay.style.backgroundColor = "rgba(0, 0, 0, 0.2)"; // começa com dia
+setInterval(toggleDayNight, 600000); // alterna a cada 10 minutos
+const spawnTimers = {};
+const MAX_ENTITIES = 30; // <-- AQUI você muda o limite
+function autoSpawn() {
+  const now = Date.now();
+  if (Object.keys(enemies).length >= MAX_ENTITIES) {
+    return;
+  }
+  const spawn = (key, interval, condition, getType) => {
+    if (!spawnTimers[key] || now - spawnTimers[key] >= interval) {
+      const { x, y, terrain } = getRandomTile();
+      if (condition(terrain)) {
+        createEnemy(x, y, getType(terrain));
+        spawnTimers[key] = now;
+      }
+    }
+  };
+  spawn("lastLagosta", 10000, t => t === "deepwater", () => "lagosta");
+  spawn("lastCreature", 5000, t => t !== "water" && t !== "deepwater",
+    () => isDay ? "vaca" : "zumbi"
+  );
+}
+setInterval(autoSpawn, 1000);
+function getRandomTile() {
+  const x = Math.floor(Math.random() * mapCols);
+  const y = Math.floor(Math.random() * mapRows);
+  const terrain = terrainMap[`${x}-${y}`];
+  return { x, y, terrain };
+}
+function getActiveMapForTile(x, y) {
+  const terrain = terrainMap[`${x}-${y}`];
+  return (terrain === "caverna" || terrain === "deepwater") ? mapContentSecond : mapContent;
+}
+function digTileWithShovel(x, y) {
+  const key = `${x}-${y}`;
+  const terrain = terrainMap[key];
+  if (!terrain || terrain === "water" || terrain === "deepwater") {
+    return;
+  }
+  const tile = document.getElementById(`terrain-${key}`);
+  if (!tile) return;
+  tile.className = "tile smoothstone";
+  tile.style.opacity = "1";
+  terrainMap[key] = "smoothstone";
+}
+function digTileWithPickaxe(x, y) {
+  const key = `${x}-${y}`;
+  const terrain = terrainMap[key];
+  if (hasDescendedByCave) return; // impede uso no segundo andar
+  if (terrain !== "smoothstone") return;
+  const tile = document.getElementById(`terrain-${key}`);
+  if (!tile) return;
+  tile.className = "tile caverna";
+  tile.style.opacity = "1";
+  terrainMap[key] = "caverna";
+}
+function generateTerrainGrid(cols = 64, rows = 64, seed = Date.now()) {
+  mapCols = cols;
+  mapRows = rows;
+  const rng = createSeededRNG(seed);
+  const terrainMap = {}, treeMap = {}, rockMap = {}, poppyMap = {}, caveMap = {}, largetreeMap = {};
+  const caveEntrances = []; // entradas de cavernas para sincronizar com o segundo andar
+  const total = cols * rows;
+  const targets = {
+    water: Math.floor(total * 0.05),
+    tree: Math.floor(total * 0.35),
+    rock: Math.floor(total * 0.02),
+    poppy: Math.floor(total * 0.02),
+    cave: Math.floor(total * 0.01),
+    largetree: Math.floor(total * 0.01)
+  };
+  const r = rng();
+let terrainType = "default"; // valor padrão
+if (r < 0.2) terrainType = "snow";
+else if (r < 0.35) terrainType = "desert";
+else if (r < 0.5) terrainType = "island";
+  const isValid = (x, y) => x >= 0 && x < cols && y >= 0 && y < rows;
+  const neighbors = (x, y) => [-1, 0, 1].flatMap(dx =>
+    [-1, 0, 1].filter(dy => dx || dy).map(dy => [x + dx, y + dy])
+  );
+  for (let x = 0; x < cols; x++)
+    for (let y = 0; y < rows; y++)
+      terrainMap[`${x}-${y}`] = terrainType === "desert" ? "sand" :
+                                terrainType === "snow" ? "snow" : "grass";
+  if (terrainType === "island") {
+  const [cx, cy] = [Math.floor(cols / 2), Math.floor(rows / 2)];
+  const radius = Math.floor(Math.min(cols, rows) / 3);
+    for (let x = 0; x < cols; x++) {
+      for (let y = 0; y < rows; y++) {
+        const dist = Math.hypot(cx - x, cy - y);
+        const key = `${x}-${y}`;
+        terrainMap[key] = dist < radius - 1 ? "grass" : dist < radius + 1 ? "water" : "deepwater";
+      }
+    }
+  }
+  const generateWater = (base) => {
+  const queue = [], seeds = Math.max(1, Math.floor(targets.water / 45));
+    for (let i = 0; i < seeds; i++) {
+      const [x, y] = [Math.floor(rng() * cols), Math.floor(rng() * rows)];
+      terrainMap[`${x}-${y}`] = "water";
+      queue.push({ x, y, depth: 0 });
+    }
+    let placed = seeds;
+    while (queue.length && placed < targets.water) {
+      const { x, y, depth } = queue.shift(), chance = 0.8 - depth * 0.1;
+      for (const [nx, ny] of neighbors(x, y)) {
+        const key = `${nx}-${ny}`;
+        if (isValid(nx, ny) && terrainMap[key] === base && rng() < chance) {
+          terrainMap[key] = "water";
+          queue.push({ x: nx, y: ny, depth: depth + 1 });
+          placed++;
+        }
+      }
+    }
+  };
+  const markDeepWater = () => {
+    const visited = new Set();
+    const bfs = (x, y) => {
+      const cluster = [], q = [{ x, y }];
+      visited.add(`${x}-${y}`);
+      while (q.length) {
+        const { x, y } = q.shift();
+        cluster.push({ x, y });
+        for (const [nx, ny] of neighbors(x, y)) {
+          const key = `${nx}-${ny}`;
+          if (isValid(nx, ny) && terrainMap[key] === "water" && !visited.has(key)) {
+            visited.add(key);
+            q.push({ x: nx, y: ny });
+          }
+        }
+      }
+      return cluster;
+    };
+    for (let x = 0; x < cols; x++) {
+      for (let y = 0; y < rows; y++) {
+        const key = `${x}-${y}`;
+        if (terrainMap[key] === "water" && !visited.has(key)) {
+          const cluster = bfs(x, y);
+          if (cluster.length < 9) continue;
+          const [avgX, avgY] = [
+            Math.round(cluster.reduce((s, p) => s + p.x, 0) / cluster.length),
+            Math.round(cluster.reduce((s, p) => s + p.y, 0) / cluster.length)
+          ];
+          const deepTiles = [];
+          let canPlace = true;
+          for (let dx = -1; dx <= 1 && canPlace; dx++) {
+            for (let dy = -1; dy <= 1; dy++) {
+              const [nx, ny] = [avgX + dx, avgY + dy];
+              const nk = `${nx}-${ny}`;
+              if (!isValid(nx, ny) || terrainMap[nk] !== "water") {
+                canPlace = false;
+                break;
+              }
+              deepTiles.push(nk);
+            }
+          }
+          if (canPlace) deepTiles.forEach(k => terrainMap[k] = "deepwater");
+        }
+      }
+    }
+  };
+  if (["default", "snow"].includes(terrainType)) {
+    const base = terrainType === "snow" ? "snow" : "grass";
+    generateWater(base);
+    markDeepWater();
+    if (base === "grass") {
+      for (let x = 0; x < cols; x++)
+        for (let y = 0; y < rows; y++) {
+          const key = `${x}-${y}`;
+          if (["water", "deepwater"].includes(terrainMap[key])) {
+            for (const [nx, ny] of neighbors(x, y)) {
+              const nk = `${nx}-${ny}`;
+              if (isValid(nx, ny) && terrainMap[nk] === "grass")
+                terrainMap[nk] = rng() < 0.8 ? "sand" : "grass";
+            }
+          }
+        }
+    }
+  }
+const generateNature = (target, map, exclude, baseChance, decay, avoid = {}, strictSpacing = false) => {
+  const queue = [];
+  for (let i = 0; i < Math.max(1, Math.floor(target / 10)); i++) {
+    const [x, y] = [Math.floor(rng() * cols), Math.floor(rng() * rows)];
+    const key = `${x}-${y}`;
+    if (exclude.includes(terrainMap[key]) || avoid[key]) continue;
+    if (strictSpacing) {
+      let blocked = false;
+      for (const [nx, ny] of neighbors(x, y)) {
+        const nKey = `${nx}-${ny}`;
+        if (map[nKey] || avoid[nKey]) {
+          blocked = true;
+          break;
+        }
+      }
+      if (blocked) continue;
+    }
+    map[key] = true;
+    queue.push({ x, y, depth: 0 });
+  }
+  let placed = queue.length;
+  while (queue.length && placed < target) {
+    const { x, y, depth } = queue.shift();
+    const chance = baseChance - depth * decay;
+    for (const [nx, ny] of neighbors(x, y)) {
+      const key = `${nx}-${ny}`;
+      if (
+        isValid(nx, ny) &&
+        !map[key] &&
+        !exclude.includes(terrainMap[key]) &&
+        !avoid[key] &&
+        rng() < chance
+      ) {
+        if (strictSpacing) {
+          let blocked = false;
+          for (const [vx, vy] of neighbors(nx, ny)) {
+            const vKey = `${vx}-${vy}`;
+            if (map[vKey] || avoid[vKey]) {
+              blocked = true;
+              break;
+            }
+          }
+          if (blocked) continue;
+        }
+        map[key] = true;
+        queue.push({ x: nx, y: ny, depth: depth + 1 });
+        placed++;
+      }
+    }
+  }
+};
+const adjustedTree = terrainType === "island" ? Math.floor(targets.tree * 0.4) :
+                    terrainType === "snow" ? Math.floor(total * 0.25) : targets.tree;
+const adjustedRock = terrainType === "snow" ? Math.floor(total * 0.05) :
+                    terrainType === "desert" ? Math.floor(total * 0.5) : targets.rock;
+if (terrainType !== "desert")
+  generateNature(adjustedTree, treeMap, ["water", "deepwater", "sand"], 0.7, 0.1);
+generateNature(adjustedRock, rockMap, ["water", "deepwater", "sand"], 0.6, 0.1, treeMap);
+generateNature(targets.poppy, poppyMap, ["water", "deepwater", "sand"], 0.5, 0.1, { ...treeMap, ...rockMap });
+generateNature(targets.largetree, largetreeMap, ["water", "deepwater", "sand"], 0.6, 0.1, { ...treeMap, ...rockMap, ...poppyMap }, true);
+generateNature(targets.cave, caveMap, ["water", "deepwater", "sand"], 0.8, 0.15);
+for (let x = 0; x < mapCols; x++) {
+  for (let y = 0; y < mapRows; y++) {
+    const key = `${x}-${y}`;
+    if (caveMap[key]) {
+      terrainMap[key] = "caverna";
+      caveEntrances.push({ x, y });
+    }
+  }
+}
+for (let x = 0; x < cols; x++) {
+  for (let y = 0; y < rows; y++) {
+    const key = `${x}-${y}`;
+    const [ox, oy] = [gridX, gridY];
+    [gridX, gridY] = [x, y];
+    placeTerrain(terrainMap[key]);
+    if (terrainMap[key] === "deepwater") deepWaterPositions.push({ x, y });
+    if (treeMap[key]) placeNature("tree");
+    if (rockMap[key]) placeNature("rock");
+    if (poppyMap[key]) placeNature("poppy");
+    if (largetreeMap[key]) placeNature("largetree"); // novo
+    [gridX, gridY] = [ox, oy];
+  }
+ }
+}
+function generateSecondFloor() {
+  const MIN_DIST = 3;     
+  const CLUSTER_RATIO = 0.20; 
+  const SEED_RATIO = 0.004;    
+  const BASE_CHANCE = 0.85;          
+  const DECAY = 0.12;      
+  const DIRS = [[1,0],[-1,0],[0,1],[0,-1]];
+  mapContentSecond.innerHTML = "";
+  const deepSet = new Set(deepWaterPositions.map(({ x, y }) => `${x}-${y}`));
+  const terrainSecondMapLocal = {};
+  const fragment = document.createDocumentFragment();
+  for (let x = 0; x < mapCols; x++) {
+    for (let y = 0; y < mapRows; y++) {
+      const key = `${x}-${y}`;
+      const el = document.createElement("div");
+      el.style.cssText = `position:absolute;left:${x * cellSize}px;top:${y * cellSize}px`;
+      if (deepSet.has(key)) {
+        el.className = "tile deepwater";
+        el.id = `terrain-${key}-second`;
+        terrainSecondMapLocal[key] = "deepwater";
+      } else {
+        el.className = "obstacle";
+        el.id = `obstacle-${x}-${y}-second`;
+      }
+      fragment.appendChild(el);
+    }
+  }
+  mapContentSecond.appendChild(fragment);
+  const dist = Array.from({ length: mapCols }, () => Array(mapRows).fill(Infinity));
+  const queue = [];
+  deepWaterPositions.forEach(({ x, y }) => {
+    dist[x][y] = 0;
+    queue.push([x, y]);
+  });
+  while (queue.length) {
+    const [cx, cy] = queue.shift();
+    for (const [dx, dy] of DIRS) {
+      const nx = cx + dx, ny = cy + dy;
+      if (nx < 0 || ny < 0 || nx >= mapCols || ny >= mapRows) continue;
+      const newDist = dist[cx][cy] + 1;
+      if (dist[nx][ny] > newDist) {
+        dist[nx][ny] = newDist;
+        queue.push([nx, ny]);
+      }
+    }
+  }
+  const eligible = [];
+  for (let x = 0; x < mapCols; x++) {
+    for (let y = 0; y < mapRows; y++) {
+      if (dist[x][y] >= MIN_DIST && !deepSet.has(`${x}-${y}`)) {
+        eligible.push([x, y]);
+      }
+    }
+  }
+  const targetSmooth = Math.floor(eligible.length * CLUSTER_RATIO);
+  const seedCount = Math.max(1, Math.floor(mapCols * mapRows * SEED_RATIO));
+  let placed = 0;
+  const placedSet = new Set();
+function placeSmooth(x, y) {
+    const key = `${x}-${y}`;
+    if (placedSet.has(key) || deepSet.has(key) || dist[x][y] < MIN_DIST) return false;
+    document.getElementById(`obstacle-${x}-${y}-second`)?.remove();
+    let el = document.getElementById(`terrain-${key}-second`);
+    if (!el) {
+      el = document.createElement("div");
+      el.id = `terrain-${key}-second`;
+      el.style.cssText = `position:absolute;left:${x * cellSize}px;top:${y * cellSize}px`;
+      mapContentSecond.appendChild(el);
+    }
+    el.className = "tile smoothstone";
+    terrainSecondMapLocal[key] = "smoothstone";
+    placedSet.add(key);
+    placed++;
+    return true;
+  }
+  for (let s = 0; s < seedCount && placed < targetSmooth; s++) {
+  const [sx, sy] = eligible[Math.floor(Math.random() * eligible.length)];
+  const cluster = [{ x: sx, y: sy, depth: 0 }];
+  placeSmooth(sx, sy);
+    while (cluster.length && placed < targetSmooth) {
+  const { x, y, depth } = cluster.shift();
+  const chance = Math.max(0.05, BASE_CHANCE - depth * DECAY);
+      for (const [dx, dy] of DIRS) {
+        const nx = x + dx, ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= mapCols || ny >= mapRows) continue;
+        if (placed >= targetSmooth) break;
+        if (Math.random() < chance && placeSmooth(nx, ny)) {
+          cluster.push({ x: nx, y: ny, depth: depth + 1 });
+          updateGlobalLightSecond();
+          updateTileLightingSecond();
+        }
+      }
+    }
+  }
+}
+</script>
+</body>
+</html>
