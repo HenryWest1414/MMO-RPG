@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mundo de Eldarion</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      height: 100%;
+      background-color: #2f2f2f;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    #terreno {
+      display: grid;
+      grid-template-columns: repeat(20, 5vw);
+      grid-template-rows: repeat(20, 5vw);
+      width: 100vw;
+      height: 100vw;
+      max-height: 100vh;
+      background-image: url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSkPWaQBWQRK7MUqE5GTgdzmVGScvtV4C_uFA&s');
+      background-size: cover;
+      position: relative;
+    }
+    .celula { border: 5px solid rgba(0,0,0,0.1); }
+    .barreira { background-color: #4f4f4f; }
+    .dano { background-color: #3c8ded; }
+    .moeda, .espada, .escudo, .poção, .armadura {
+      background-size: cover;
+    }
+    .moeda {
+      background-image: url('https://img.icons8.com/color/48/000000/coins.png');
+      border-radius: 50%;
+    }
+    .espada { background-image: url('https://img.icons8.com/color/48/000000/sword.png'); }
+    .escudo { background-image: url('https://img.icons8.com/color/48/000000/shield.png'); }
+    .poção { background-image: url('https://img.icons8.com/color/48/000000/potion.png'); }
+    .armadura { background-image: url('https://img.icons8.com/color/48/000000/armor.png'); }
+    #avatar, #inimigo {
+      position: absolute;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      pointer-events: none;
+      transition: top 0.3s ease-out, left 0.3s ease-out;
+    }
+    #avatar { background-color: #ff4500; z-index: 3; }
+    #inimigo { background-color: #000000; z-index: 2; }
+    #vida {
+      position: absolute;
+      width: 28px;
+      height: 6px;
+      background-color: red;
+      top: -10px;
+      left: 0;
+      border: 1px solid #333;
+    }
+    #barraVida {
+      height: 100%;
+      background-color: limegreen;
+      width: 100%;
+      transition: width 0.2s ease;
+    }
+    .painel {
+      position: absolute;
+      background-color: rgba(0,0,0,0.5);
+      color: #fff;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 14px;
+      z-index: 10;
+    }
+    #hud { top: 10px; left: 10px; }
+    #inventario { top: 10px; right: 10px; }
+    #hud div { margin-bottom: 4px; }
+    #mensagemMissao { color: #ffe600; font-weight: bold; }
+    #slots {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .slot {
+      width: 40px;
+      height: 40px;
+      background-color: #222;
+      border: 2px solid #555;
+      border-radius: 6px;
+      background-size: cover;
+      background-position: center;
+      position: relative;
+    }
+    #slotPoções span {
+      position: absolute;
+      bottom: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 12px;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <div id="hud" class="painel">
+    <div><strong>Henry</strong> | 🧡 Vida: <span id="vidaTexto">100</span>%</div>
+    <div>🧝 Nome: <span id="player-name">Jogador</span></div>
+    <div>💰 Moedas: <span id="moedasTexto">0</span></div>
+    <div id="mensagemMissao">📜 Missão: Coletar 5 moedas e escapar do Caçador.</div>
+  </div>
+  <div id="inventario" class="painel">
+    <strong>Inventário</strong>
+    <div id="slots">
+      <div class="slot" id="slotEspada" title="Espada"></div>
+      <div class="slot" id="slotEscudo" title="Escudo"></div>
+      <div class="slot" id="slotArmadura" title="Armadura"></div>
+      <div class="slot" id="slotPoções" title="Poções"><span id="poçõesTexto">0</span></div>
+    </div>
+  </div>
+  <div id="terreno">
+    <div id="avatar"><div id="vida"><div id="barraVida"></div></div></div>
+    <div id="inimigo"></div>
+  </div>
+  <script>
+const terreno = document.getElementById("terreno");
+const avatar = document.getElementById("avatar");
+const inimigo = document.getElementById("inimigo");
+const barraVida = document.getElementById("barraVida");
+const vidaTexto = document.getElementById("vidaTexto");
+const moedasTexto = document.getElementById("moedasTexto");
+const slotPoções = document.getElementById("slotPoções");
+const poçõesTexto = document.getElementById("poçõesTexto");
+const cols = 20, rows = 20;
+const celulaLargura = window.innerWidth / cols;
+const celulaAltura = celulaLargura;
+let avatarPos = { row: 0, col: 0 };
+let inimigoPos = { row: rows - 1, col: cols - 1 };
+let vidaAtual = 100, moedas = 0;
+let espada = false, escudo = false, armadura = false, poções = 0;
+const barreiras = [], danos = [], moedasPos = [];
+const sons = {
+  moeda: new Audio("https://freesound.org/data/previews/341/341695_6242400-lq.mp3"),
+  dano: new Audio("https://freesound.org/data/previews/256/256113_3263906-lq.mp3"),
+  poção: new Audio("https://freesound.org/data/previews/331/331912_3248244-lq.mp3")
+};
+function criarTerreno() {
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const celula = document.createElement("div");
+      celula.classList.add("celula");
+      const pos = `${r},${c}`;
+      const rand = Math.random();
+      if (rand < 0.1 && pos !== "0,0" && pos !== `${rows - 1},${cols - 1}`) {
+        celula.classList.add("barreira");
+        barreiras.push(pos);
+      } else if (rand < 0.15) {
+        celula.classList.add("dano");
+        danos.push(pos);
+      } else if (rand < 0.18) {
+        celula.classList.add("moeda");
+        moedasPos.push(pos);
+      } else if (rand < 0.20) celula.classList.add("espada");
+      else if (rand < 0.22) celula.classList.add("escudo");
+      else if (rand < 0.24) celula.classList.add("poção");
+      else if (rand < 0.26) celula.classList.add("armadura");
+      terreno.appendChild(celula);
+    }
+  }
+}
+function estaLivre(row, col) {
+  return row >= 0 && row < rows && col >= 0 && col < cols && !barreiras.includes(`${row},${col}`);
+}
+function atualizarPosicao(elemento, pos) {
+  elemento.style.left = `${pos.col * celulaLargura + celulaLargura / 2 - elemento.offsetWidth / 2}px`;
+  elemento.style.top = `${pos.row * celulaAltura + celulaAltura / 2 - elemento.offsetHeight / 2}px`;
+}
+function aplicarDano() {
+  const pos = `${avatarPos.row},${avatarPos.col}`;
+  if (!danos.includes(pos)) return;
+  let danoFinal = 10;
+  if (escudo) danoFinal -= 3;
+  if (armadura) danoFinal *= 0.5;
+  vidaAtual = Math.max(vidaAtual - danoFinal, 0);
+  barraVida.style.width = `${vidaAtual}%`;
+  vidaTexto.innerText = vidaAtual;
+  sons.dano.play();
+  if (vidaAtual <= 0) {
+    alert("Você foi derrotado! Reiniciando...");
+    location.reload();
+  }
+}
+function aplicarMoeda() {
+  const pos = `${avatarPos.row},${avatarPos.col}`;
+  const index = moedasPos.indexOf(pos);
+  if (index === -1) return;
+  moedas++;
+  moedasTexto.innerText = moedas;
+  moedasPos.splice(index, 1);
+  terreno.children[index].classList.remove("moeda");
+  sons.moeda.play();
+  if (moedas >= 5) {
+    document.getElementById("mensagemMissao").innerText = "🏆 Missão cumprida! Continue explorando...";
+  }
+}
+function aplicarItem() {
+  const index = avatarPos.row * cols + avatarPos.col;
+  const celula = terreno.children[index];
+  const itens = {
+    espada: { flag: "espada", slot: "slotEspada", url: "sword" },
+    escudo: { flag: "escudo", slot: "slotEscudo", url: "shield" },
+    armadura: { flag: "armadura", slot: "slotArmadura", url: "armor" },
+    poção: {
+      flag: "poção",
+      slot: "slotPoções",
+      url: "potion",
+      extra: () => {
+        poções++;
+        poçõesTexto.innerText = poções;
+        sons.poção.play();
+      }
+    }
+  };
+  for (const chave in itens) {
+    const { flag, slot, url, extra } = itens[chave];
+    if (celula.classList.contains(flag)) {
+      if (chave !== "poção") window[chave] = true;
+      celula.classList.remove(flag);
+      document.getElementById(slot).style.backgroundImage = `url('https://img.icons8.com/color/48/000000/${url}.png')`;
+      if (extra) extra();
+    }
+  }
+}
+function moverAvatar(novaPos) {
+  if (!estaLivre(novaPos.row, novaPos.col)) return;
+  avatarPos = novaPos;
+  atualizarPosicao(avatar, avatarPos);
+  aplicarDano();
+  aplicarMoeda();
+  aplicarItem();
+}
+document.addEventListener("keydown", (e) => {
+  const novaPos = { ...avatarPos };
+  switch (e.key.toLowerCase()) {
+    case "w": novaPos.row--; break;
+    case "s": novaPos.row++; break;
+    case "a": novaPos.col--; break;
+    case "d": novaPos.col++; break;
+    case "e":
+      if (poções > 0 && vidaAtual < 100) {
+        poções--;
+        vidaAtual = Math.min(vidaAtual + 30, 100);
+        barraVida.style.width = `${vidaAtual}%`;
+        vidaTexto.innerText = vidaAtual;
+        poçõesTexto.innerText = poções;
+        sons.poção.play();
+      }
+      return;
+    default: return;
+  }
+  moverAvatar(novaPos);
+});
+terreno.addEventListener("click", (e) => {
+  const col = Math.floor(e.clientX / celulaLargura);
+  const row = Math.floor(e.clientY / celulaAltura);
+  moverAvatar({ row, col });
+});
+function perseguir() {
+  const dx = avatarPos.col - inimigoPos.col;
+  const dy = avatarPos.row - inimigoPos.row;
+  const next = { ...inimigoPos };
+  if (Math.abs(dx) > Math.abs(dy)) {
+    const tentativa = inimigoPos.col + (dx > 0 ? 1 : -1);
+    if (estaLivre(inimigoPos.row, tentativa)) next.col = tentativa;
+  } else {
+    const tentativa = inimigoPos.row + (dy > 0 ? 1 : -1);
+    if (estaLivre(tentativa, inimigoPos.col)) next.row = tentativa;
+  }
+  inimigoPos = next;
+  atualizarPosicao(inimigo, inimigoPos);
+  if (inimigoPos.row === avatarPos.row && inimigoPos.col === avatarPos.col) {
+    alert("Você foi alcançado pelo Caçador das Sombras! Reiniciando...");
+    location.reload();
+  }
+}
+// Inicialização
+document.getElementById("player-name").textContent = prompt("Digite seu nome:") || "Jogador";
+criarTerreno();
+atualizarPosicao(avatar, avatarPos);
+atualizarPosicao(inimigo, inimigoPos);
+setInterval(perseguir, 300);
+  </script>
+</body>
+</html>

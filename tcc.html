@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RENOVA - Página Inicial</title>
+  <link rel="icon" href="c:\Users\4501786\Downloads\Copilot_20250901_143711.png" type="image/x-icon">
+    <a href="#" class="config-aba" onclick="toggleSugestoes()">⚙️ Configurações </a>
+<div id="caixa-config" style="display:none; position:fixed; top:60px; left:10px; background:#fffbe7; color:#333; border:2px solid #6b4c3b; padding:10px; border-radius:6px; box-shadow:0 0 10px #000; width:250px; z-index:1000;">
+<strong>Login:</strong>
+<input type="text" id="loginUser" placeholder="Usuário" style="width:94%; padding:6px; margin-top:8px;">
+<input type="password" id="loginPass" placeholder="Senha" style="width:94%; padding:6px; margin-top:6px;">
+<button onclick="fazerLogin()" style="width:100%; padding:6px; background:#6b4c3b; color:#fffbe7; border:none; border-radius:4px; margin-top:6px;">Entrar</button>
+<p id="loginStatus" style="font-size:0.9em; margin-top:6px;"></p>
+<hr>
+<strong>Idioma:</strong>
+<select id="idiomaSelect" style="width:100%; padding:6px; margin-top:6px;">
+  <option value="pt">Português</option>
+  <option value="en">English</option>
+  <option value="es">Español</option>
+</select>
+<hr>
+<strong>Tema Visual:</strong>
+<select id="temaSelect" style="width:100%; padding:6px; margin-top:6px;">
+  <option value="default">Padrão</option>
+  <option value="medieval">Claro</option>
+  <option value="futurista">Futurista</option>
+</select>
+<hr>
+  <strong>Sugestões:</strong>
+  <ul id="sugestoes" style="list-style:disc; padding-left:20px; margin-top:8px;"></ul>
+</div>
+<script>
+  const ideias = [
+    "Youtubers em Alta",
+    "Banimentos recentes",
+    "Eventos RucoyOnline 2025",
+    "Guildas Recrutando",
+    "Como upar rápido no Rucoy",
+    "Videos e tutoriais de Rucoy",
+    "Atualizações",
+  ];
+
+  function embaralhar(array) {
+    return array.sort(() => Math.random() - 0.5).slice(0, 3);
+  }
+  function toggleSugestoes() {
+    const box = document.getElementById("caixa-config");
+    const lista = document.getElementById("sugestoes");
+    if (box.style.display === "none") {
+      const sorteadas = embaralhar(ideias);
+      lista.innerHTML = sorteadas.map(txt => `<li>${txt}</li>`).join('');
+      box.style.display = "block";
+    } else {
+      box.style.display = "none";
+    }
+  }
+</script>
+  <style>
+    body {
+      font-family: 'MedievalSharp', 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: url('https://www.transparenttextures.com/patterns/old-mathematics.png') repeat;
+      color: #333;
+      transition: background 0.3s, color 0.3s;
+    }
+    header {
+      background: linear-gradient(to right, #eb9b05, #0f0c29);
+      color: white;
+      text-align: center;
+      border-bottom: 4px solid gold;
+      padding: 40px 40px;
+    }
+    .config-aba {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      background-color: #6b4c3b;
+      border: 2px solid gold;
+      padding: 8px 14px;
+      color: #fffbe7;
+      text-decoration: none;
+      border-radius: 6px;
+      box-shadow: 0 0 10px #000;
+      font-size: 0.95em;
+      transition: background 0.3s ease;
+    }
+    .config-aba:hover {
+      background-color: #8a6e5a;
+    }
+    header img.logo {
+      max-width: 130px;
+      height: auto;
+      display: block;
+      margin: 0 auto 10px;
+    }
+
+    header h1 {
+      font-size: 4.5em;
+      margin: 0;
+    }
+    nav {
+      background-color: #333;
+      text-align: center;
+      padding: 10px;
+    }
+    nav a {
+      color: white;
+      margin: 0 15px;
+      text-decoration: none;
+    }
+    section {
+      padding: 40px 20px;
+      max-width: 900px;
+      margin: auto;
+    }
+    .projetos {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+    }
+    .projeto {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      opacity: 0;
+      transform: translateY(30px);
+      animation: fadeUp 0.6s ease forwards;
+    }
+    .projeto:hover {
+      transform: scale(1.05);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    }
+    .projetos .projeto:nth-child(1) { animation-delay: 0.2s; }
+    .projetos .projeto:nth-child(2) { animation-delay: 0.4s; }
+    .projetos .projeto:nth-child(3) { animation-delay: 0.6s; }
+    .projetos .projeto:nth-child(4) { animation-delay: 0.8s; }
+    @keyframes fadeUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    footer {
+      background-color: #333;
+      color: white;
+      text-align: center;
+      padding: 20px;
+      margin-top: 40px;
+    }
+    #searchInput {
+      padding: 8px;
+      width: 250px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      margin: 20px auto;
+      display: block;
+    }
+    #toggle-mode {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: #eb9b05;
+      color: white;
+      border: 2px solid gold;
+      padding: 10px 15px;
+      cursor: pointer;
+      border-radius: 5px;
+      z-index: 1000;
+    }
+    .whatsapp-float {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 1000;
+    }
+    .whatsapp-float img {
+      width: 60px;
+    }
+    .dark-mode {
+      background-color: #121212;
+      color: #f4f4f4;
+    }
+    .dark-mode header,
+    .dark-mode nav,
+    .dark-mode footer {
+      background-color: #1e1e1e;
+    }
+    .dark-mode nav a {
+      color: #ddd;
+    }
+    .dark-mode .projeto {
+      background-color: #1f1f1f;
+      color: white;
+    }
+    @media (max-width: 600px) {
+      header h1 {
+        font-size: 2.5em;
+      }
+      nav a {
+        display: block;
+        margin: 10px 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <button id="toggle-mode">Modo Escuro</button>
+  <a href="https://wa.me/5511999999999" target="_blank" class="whatsapp-float">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp">
+  </a>
+  <header>
+    <img src="c:\Users\4501786\Downloads\Copilot_20250901_143711.png" alt="Logo da Healtyhub" class="logo">
+    <h1>RENOVA</h1>
+    <p>Sustentavel | Pratico | Economico</p>
+  </header>
+  <nav>
+    <a href="#sobre">Sobre</a>
+    <a href="#projetos">Projetos</a>
+    <a href="#contato">Contato</a>
+  </nav>
+  <input type="text" id="searchInput" placeholder="Buscar projetos...">
+<!--test-->
+  <section style="display: flex; justify-content: center; margin-top: 40px;">
+  <div class="slideshow-container">
+    <img class="slides fade ativo" src="https://picsum.photos/id/1018/300/200" alt="Slide 1">
+    <img class="slides fade" src="https://picsum.photos/id/1015/300/200" alt="Slide 2">
+    <img class="slides fade" src="https://picsum.photos/id/1020/300/200" alt="Slide 3">
+    <img class="slides fade" src="https://picsum.photos/id/1021/300/200" alt="Slide 4">
+    <img class="slides fade" src="https://picsum.photos/id/1022/300/200" alt="Slide 5">
+    <div class="dots" style="text-align:center; margin-top: 10px;">
+      <span class="dot ativo" onclick="setSlide(0)"></span>
+      <span class="dot" onclick="setSlide(1)"></span>
+      <span class="dot" onclick="setSlide(2)"></span>
+      <span class="dot" onclick="setSlide(3)"></span>
+      <span class="dot" onclick="setSlide(4)"></span>
+    </div>
+  </div>
+</section>
+<style>
+  .slideshow-container {
+    width: 800px;
+    height: 230px;
+    position: relative;
+    overflow: hidden;
+    border-radius: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    background-color: #000;
+  }
+  .slides {
+    display: none;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+  .slides.ativo {
+    display: block;
+    animation: fade 1s ease-in-out;
+  }
+  .dot {
+    height: 12px;
+    width: 12px;
+    margin: 0 4px;
+    background-color: #bbb;
+    border-radius: 50%;
+    display: inline-block;
+    cursor: pointer;
+  }
+  body[data-tema="medieval"] {
+  background: url('https://www.transparenttextures.com/patterns/old-mathematics.png') repeat;
+  color: #3b2f2f;
+}
+body[data-tema="futurista"] {
+  background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+  color: #e0e0e0;
+}
+  .dot.ativo {
+    background-color: #f4b400;
+  }
+  @keyframes fade {
+    from { opacity: 0.3; }
+    to { opacity: 1; }
+  }
+</style>
+<script>
+  let slideAtual = 0;
+  const slides = document.querySelectorAll(".slides");
+  const dots = document.querySelectorAll(".dot");
+  function mostrarSlide(n) {
+    slides.forEach((slide, i) => {
+      slide.classList.remove("ativo");
+      dots[i].classList.remove("ativo");
+    });
+    slides[n].classList.add("ativo");
+    dots[n].classList.add("ativo");
+  }
+  function setSlide(n) {
+    slideAtual = n;
+    mostrarSlide(slideAtual);
+  }
+  setInterval(() => {
+    slideAtual = (slideAtual + 1) % slides.length;
+    mostrarSlide(slideAtual);
+  }, 4000);
+</script>
+  <section id="projetos">
+  <h2>Atualizações de 2025</h2>
+  <hr>
+  <div class="projetos">
+   <a href="projeto-golfinho.html" target="_blank" style="text-decoration: none; color: inherit;">
+      <div class="projeto">
+        <h3>Domesticação de Golfinhos Cientistas</h3>
+        <p>Domesticação e treinamento de golfinhos para auxilio terapeutico.</p>
+      </div>
+    </a>
+    <a href="projeto.contratação.htm" target="_blank" style="text-decoration: none; color: inherit;">
+      <div class="projeto">
+        <h3>Contratação de Novos Funcionários</h3>
+        <p>Vagas com salário de até R$ 199,80</p>
+      </div>
+    </a> 
+    <a href="projeto-charope.html" target="_blank" style="text-decoration: none; color: inherit;">
+      <div class="projeto">
+        <h3>Comercialização do novo Charope Gamer</h3>
+        <p>Charopes com luz RGB para atrair a Geração Z.</p>
+      </div>
+    </a> 
+    <a href="abertura.html" target="_blank" style="text-decoration: none; color: inherit;">
+      <div class="projeto">
+        <h3>RucoyOnline 2?</h3>
+        <p>Jogo em Desenvolvimento está atraindo novos jogadores do mundo todo!</p>
+      </div>
+    </a> 
+    <a href="projeto-charope.html" target="_blank" style="text-decoration: none; color: inherit;">
+      <div class="projeto">
+        <h3>Guild Akatsuki</h3>
+        <p>Recrutamento aberto para Players com SKILL +500</p>
+      </div>
+    </a> 
+    <a href="projeto-charope.html" target="_blank" style="text-decoration: none; color: inherit;">
+      <div class="projeto">
+        <h3>Eventos</h3>
+        <p>Confira os proximos eventos!</p>
+      </div>
+    </a> 
+    <a href="projeto-vacina.html" target="_blank" style="text-decoration: none; color: inherit;">
+      <div class="projeto">
+        <h3>Naro Vendas</h3>
+        <p>Campanha criativa de vacinação infantil via drones.</p>
+      </div>
+    </a>
+     <a href="projeto-vacina.html" target="_blank" style="text-decoration: none; color: inherit;">
+      <div class="projeto">
+        <h3>Laokai</h3>
+        <p>YouTuber de Rucoy de +4.800 Inscritos.</p>
+      </div>
+    </a>
+    <a href="projeto-vacina.html" target="_blank" style="text-decoration: none; color: inherit;">
+      <div class="projeto">
+        <h3>Pedry</h3>
+        <p>YouTuber de Rucoy de +1.000 Inscritos.</p>
+      </div>
+    </a>
+  </div>
+  <section id="sobre">
+    <h2>Sobre o Site</h2>
+    <p>Com o aumento da demanda por Tecnologias sustentaveis a RENOVA tem como objetivo a coleta e reciclagem Sustentavel de Lixo, Com isso nós da Fundação RENOVA e patrocinadores, desenvolvemos um Aplicativo onde nossos usuarios entregam seu Lixo e ganham créditos, que acumulados podem ser trocados por dinheiro ou serviços na platafroma Web garantindo novas vagas de emprego e auxilio financeiro para quem utiliza nosso APP. Possui Alguma ideia? Caso queira compartilhar seus projetos em nosso site entre em contato com nossa equipe de Desenvolvedores.</p>
+  </section>
+</section>
+  <section id="contato">
+    <h2>Entre em Contato</h2>
+    <ul>
+      <li>Email: renova@gmail.com</li>
+      <li>LinkedIn: linkedin.com/in/renova</li>
+      <li>GitHub: github.com/renova</li>
+    </ul>
+  </section>
+  <footer>
+    &copy; 2025 RENOVA. Todos os direitos reservados.
+  </footer>
+  <script>
+    // Filtro de busca
+    document.getElementById("searchInput").addEventListener("input", function () {
+      const termo = this.value.toLowerCase();
+      document.querySelectorAll(".projeto").forEach(proj => {
+        proj.style.display = proj.innerText.toLowerCase().includes(termo) ? "block" : "none";
+      });
+    });
+    // Tema escuro com localStorage
+    const botaoModo = document.getElementById("toggle-mode");
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const salvo = localStorage.getItem('modo');
+      if (salvo === 'dark') {
+        document.body.classList.add('dark-mode');
+        botaoModo.innerText = 'Modo Claro';
+      }
+    });
+    botaoModo.addEventListener("click", () => {
+      document.body.classList.toggle("dark-mode");
+      const modo = document.body.classList.contains("dark-mode") ? "dark" : "light";
+      localStorage.setItem("modo", modo);
+      botaoModo.innerText = modo === "dark" ? "Modo Claro" : "Modo Escuro";
+    });
+    function fazerLogin() {
+  const user = document.getElementById("loginUser").value;
+  const pass = document.getElementById("loginPass").value;
+  if (user === "admin" && pass === "1234") {
+    document.getElementById("loginStatus").innerText = "Login bem-sucedido!";
+    localStorage.setItem("usuarioLogado", user);
+  } else {
+    document.getElementById("loginStatus").innerText = "Usuário ou senha incorretos.";
+  }
+}
+document.getElementById("idiomaSelect").addEventListener("change", function () {
+  const idioma = this.value;
+  localStorage.setItem("idiomaPreferido", idioma);
+  alert("Idioma alterado para: " + idioma);
+});
+document.getElementById("temaSelect").addEventListener("change", function () {
+  const tema = this.value;
+  document.body.setAttribute("data-tema", tema);
+  localStorage.setItem("temaVisual", tema);
+});
+
+  </script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Grind com Sprite</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      cursor: crosshair;
+    }
+    #grind {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      background-color: #222;
+    }
+    .sprite {
+      position: absolute;
+      width: 32px;
+      height: 32px;
+      background-image: url('sprite.jpeg.png'); /* Certifique-se que o nome está correto */
+      background-size: cover;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="grind"></div>
+
+  <script>
+    const grind = document.getElementById('grind');
+
+    grind.addEventListener('click', (e) => {
+      const sprite = document.createElement('div');
+      sprite.classList.add('sprite');
+      // Snap para grade de 32x32 pixels
+      const gridSize = 32;
+      const x = Math.floor(e.clientX / gridSize) * gridSize;
+      const y = Math.floor(e.clientY / gridSize) * gridSize;
+
+      sprite.style.left = `${x}px`;
+      sprite.style.top = `${y}px`;
+
+      grind.appendChild(sprite);
+    });
+  </script>
+</body>
+</html>

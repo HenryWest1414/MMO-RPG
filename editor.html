@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Editor de Estruturas RPG</title>
+<style>
+/* ============================
+      LAYOUT BÁSICO
+============================ */
+body {
+  margin: 0;
+  font-family: sans-serif;
+  background-color: #111;
+  color: white;
+  overflow: hidden;
+}
+#toolbar {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  background: rgba(51, 51, 51, 0.85);
+  padding: 10px;
+  border-radius: 8px;
+  z-index: 2000;
+  cursor: move;
+  width: 240px;
+}
+#toolbar select, #toolbar button, #toolbar input {
+  margin-top: 5px;
+  width: 100%;
+  padding: 6px;
+  border-radius: 4px;
+  border: none;
+  background: #555;
+  color: white;
+  cursor: pointer;
+}
+#viewport {
+  width: 100vw;
+  height: 100vh;
+  overflow: scroll;
+}
+#grind {
+  position: relative;
+  width: 4096px;
+  height: 4096px;
+  background-color: #222;
+  background-image:
+    linear-gradient(#444 1px, transparent 1px),
+    linear-gradient(90deg, #444 1px, transparent 1px);
+  background-size: 64px 64px;
+  cursor: crosshair;
+}
+/* ============================
+      SPRITES (Tiles + Obstáculos)
+============================ */
+.sprite {
+  position: absolute;
+  background-size: cover;
+  background-repeat: no-repeat;
+  pointer-events: none;
+}
+/* Tiles */
+.sprite.tile {
+  width: 64px;
+  height: 64px;
+  z-index: 1;
+}
+/* Obstáculos */
+.sprite.obstacle {
+  z-index: 1000;
+}
+/* ============================
+      TEXTURAS DE TILES
+============================ */
+.sprite.water       { background-image: url('water.jpeg.png'); }
+.sprite.deepwater   { background-image: url('deepwater.jpeg.png'); }
+.sprite.lava        { background-color: #ff4500; }
+.sprite.sand        { background-image: url('sand.jpeg.png'); }
+.sprite.smoothstone { background-image: url('smoothstone.jpeg.png'); }
+.sprite.blackstone  { background-color: #333333; }
+.sprite.grass       { background-image: url('grass.jpeg.png'); }
+.sprite.drygrass    { background-color: #cac700; }
+.sprite.snow        { background-image: url('snow.jpeg.png'); }
+.sprite.wood        { background-image: url('wood.jpeg.png'); }
+.sprite.caverna     { background-color: #252525; }
+/* ============================
+      TEXTURAS DE OBSTÁCULOS
+============================ */
+.sprite.tree       { background-image: url('arvore.jpeg.png'); width: 64px; height: 64px; }
+.sprite.rock       { background-image: url('rock.jpeg.png'); width: 64px; height: 64px; }
+.sprite.poppy      { background-image: url('poppys.jpeg.png'); width: 64px; height: 64px; }
+.sprite.plank      { background-image: url('plank.jpeg.png'); width: 64px; height: 64px; }
+.sprite.fogueira   { background-image: url('campfire.jpeg.gif'); width: 64px; height: 64px; }
+.sprite.bigorna    { background-image: url('bigorna.jpeg.png'); width: 64px; height: 64px; }
+.sprite.jarro      { background-image: url('jarro.jpeg.png'); width: 64px; height: 64px; }
+.sprite.estande_de_livros { background-image: url('estande_de_livros.jpeg.png'); width: 64px; height: 64px; }
+.sprite.caldeirao  { background-image: url('caldeirao.jpeg.png'); width: 64px; height: 64px; }
+.sprite.bancada    { background-image: url('bancada.jpeg.png'); width: 64px; height: 64px; }
+/* Obstáculo grande (3×3 tiles) */
+.sprite.largetree {
+  background-image: url('largetree.jpeg.png');
+  width: 192px;
+  height: 192px;
+  transform: translate(-64px, -128px);
+  z-index: 2000;
+}
+/* ============================
+      MINIMAPA
+============================ */
+#minimap {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  width: 200px;
+  height: 200px;
+  border: 2px solid #fff;
+  background: #000;
+  z-index: 1500;
+}
+</style>
+</head>
+<body>
+<div id="toolbar">
+  <label>Sprite:</label>
+  <select id="spriteSelect"></select>
+  <button onclick="toggleEraser()">🧼 Borracha</button>
+  <button onclick="toggleLayer()">🧬 Camada</button>
+  <button onclick="undo()">↩️</button>
+  <button onclick="redo()">↪️</button>
+  <button onclick="clearAll()">🧹 Limpar</button>
+  <button onclick="saveStructure()">💾 Salvar JSON</button>
+  <button onclick="exportMatrix()">📊 Exportar Matriz</button>
+  <button onclick="exportImage()">🖼️ Exportar Imagem</button>
+  <button onclick="toggleMinimap()">🗺️ Alternar Minimap</button>
+  <input type="file" id="loadFile" accept=".json" onchange="loadStructure(event)">
+</div>
+<div id="viewport">
+  <div id="grind"></div>
+  <canvas id="minimap"></canvas>
+</div>
+<script>
+/* ============================
+      CONFIGURAÇÕES
+============================ */
+const TILE_SIZE = 64;
+const MAP_SIZE = 4096;
+const grind = document.getElementById("grind");
+const spriteSelect = document.getElementById("spriteSelect");
+const minimap = document.getElementById("minimap");
+const ctxMini = minimap.getContext("2d");
+let isPlacing = false;
+let eraserMode = false;
+let currentLayer = 0;
+const structure = [];
+const spriteMap = new Map();
+let history = [];
+let redoStack = [];
+/* ============================
+      LISTA DE SPRITES
+============================ */
+const tileTypes = [
+  "water","deepwater","lava","sand","smoothstone",
+  "blackstone","grass","drygrass","snow","wood","caverna"
+];
+const obstacleTypes = [
+  "tree","rock","poppy","plank","fogueira","bigorna",
+  "jarro","estande_de_livros","caldeirao","bancada","largetree"
+];
+const allSprites = [...tileTypes, ...obstacleTypes];
+/* Preencher seletor */
+allSprites.forEach(t => {
+  const o = document.createElement("option");
+  o.value = t;
+  o.textContent = t;
+  spriteSelect.appendChild(o);
+});
+/* ============================
+      FUNÇÃO PRINCIPAL
+============================ */
+function placeSprite(tipo, x, y, layer = 0) {
+  const key = `${x},${y},${layer},${tipo}`;
+  if (spriteMap.has(key)) return;
+  const el = document.createElement("div");
+  if (tileTypes.includes(tipo)) {
+    el.className = "sprite tile " + tipo;
+  } else {
+    el.className = "sprite obstacle " + tipo;
+  }
+  el.style.left = x + "px";
+  el.style.top = y + "px";
+  el.dataset.layer = layer;
+  grind.appendChild(el);
+  spriteMap.set(key, el);
+  structure.push({ tipo, x, y, layer });
+  saveHistory();
+}
+function erase(x, y) {
+  [...spriteMap.keys()].forEach(k => {
+    if (k.startsWith(`${x},${y}`)) {
+      spriteMap.get(k).remove();
+      spriteMap.delete(k);
+      const i = structure.findIndex(s => s.x === x && s.y === y);
+      if (i !== -1) structure.splice(i, 1);
+    }
+  });
+  saveHistory();
+}
+function handleAction(e) {
+  const rect = grind.getBoundingClientRect();
+  const x = Math.floor((e.clientX - rect.left) / TILE_SIZE) * TILE_SIZE;
+  const y = Math.floor((e.clientY - rect.top) / TILE_SIZE) * TILE_SIZE;
+  if (eraserMode) erase(x, y);
+  else placeSprite(spriteSelect.value, x, y, currentLayer);
+}
+/* ============================
+      EVENTOS
+============================ */
+grind.addEventListener("mousedown", e => {
+  isPlacing = true;
+  handleAction(e);
+});
+grind.addEventListener("mousemove", e => {
+  if (isPlacing) handleAction(e);
+});
+document.addEventListener("mouseup", () => isPlacing = false);
+/* ============================
+      FERRAMENTAS
+============================ */
+function toggleEraser() { eraserMode = !eraserMode; }
+function toggleLayer() { currentLayer = (currentLayer + 1) % 5; alert("Camada: " + currentLayer); }
+function clearAll() {
+  document.querySelectorAll(".sprite").forEach(e => e.remove());
+  structure.length = 0;
+  spriteMap.clear();
+  saveHistory();
+}
+/* ============================
+      HISTÓRICO
+============================ */
+function saveHistory() {
+  history.push(JSON.stringify(structure));
+  redoStack = [];
+}
+function undo() {
+  if (history.length < 2) return;
+  redoStack.push(history.pop());
+  restore(JSON.parse(history[history.length - 1]));
+}
+function redo() {
+  if (!redoStack.length) return;
+  const next = redoStack.pop();
+  history.push(next);
+  restore(JSON.parse(next));
+}
+function restore(data) {
+  clearAll();
+  data.forEach(obj => {
+    placeSprite(obj.tipo, obj.x, obj.y, obj.layer);
+  });
+}
+/* ============================
+      EXPORTAÇÃO
+============================ */
+function saveStructure() {
+  const blob = new Blob([JSON.stringify(structure, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "estrutura.json";
+  a.click();
+}
+function exportMatrix() {
+  const matrix = {};
+  structure.forEach(obj => {
+    const { x, y, tipo, layer = 0 } = obj;
+    matrix[layer] ??= {};
+    matrix[layer][y] ??= {};
+    matrix[layer][y][x] = tipo;
+  });
+  const blob = new Blob([JSON.stringify(matrix, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "matriz.json";
+  a.click();
+}
+function exportImage() {
+  const canvas = document.createElement("canvas");
+  canvas.width = MAP_SIZE;
+  canvas.height = MAP_SIZE;
+  const ctx = canvas.getContext("2d");
+  structure.forEach(obj => {
+    ctx.fillStyle = "#555";
+    ctx.fillRect(obj.x, obj.y, TILE_SIZE, TILE_SIZE);
+  });
+  canvas.toBlob(blob => {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "mapa.png";
+    a.click();
+  });
+}
+/* ============================
+      MINIMAPA
+============================ */
+function updateMinimap() {
+  ctxMini.clearRect(0, 0, minimap.width, minimap.height);
+  const scale = minimap.width / MAP_SIZE;
+  structure.forEach(obj => {
+    const isObstacle = obstacleTypes.includes(obj.tipo);
+    ctxMini.fillStyle = isObstacle ? "#fff" : "#888";
+    ctxMini.fillRect(obj.x * scale, obj.y * scale, TILE_SIZE * scale, TILE_SIZE * scale);
+  });
+}
+setInterval(updateMinimap, 500);
+function toggleMinimap() {
+  minimap.style.display = minimap.style.display === "none" ? "block" : "none";
+}
+/* ============================
+      ARRASTAR TOOLBAR
+============================ */
+let drag = false, offX = 0, offY = 0;
+toolbar.addEventListener("mousedown", e => {
+  if (["SELECT","BUTTON","INPUT"].includes(e.target.tagName)) return;
+  drag = true;
+  offX = e.clientX - toolbar.offsetLeft;
+  offY = e.clientY - toolbar.offsetTop;
+});
+document.addEventListener("mousemove", e => {
+  if (drag) {
+    toolbar.style.left = (e.clientX - offX) + "px";
+    toolbar.style.top = (e.clientY - offY) + "px";
+  }
+});
+document.addEventListener("mouseup", () => drag = false);
+</script>
+</body>
+</html>
