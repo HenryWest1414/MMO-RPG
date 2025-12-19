@@ -759,7 +759,6 @@ body, .map, .chat, #chat-box {
     <button onclick="createEnemy(gridX, gridY, 'grifo')">Grifo</button>
     <button onclick="createEnemy(gridX, gridY, 'lagosta')">Lagosta</button>
     <button onclick="createEnemy(gridX, gridY, 'lobisomem')">Lobisomem</button>
-    <button onclick="createEnemy(gridX, gridY, 'mago')">Mago Sombrio</button>
     <button onclick="createEnemy(gridX, gridY, 'pinguim')">Pinguim</button>
     <button onclick="createEnemy(gridX, gridY, 'porco')">Porco</button>
     <button onclick="createEnemy(gridX, gridY, 'urso')">Urso</button>
@@ -2114,7 +2113,7 @@ function createEnemy(x, y, type = "zumbi") {
     element: enemy,
     hpFill,
     type,
-    behavior: type === "vaca" ? "passive" : ["lobisomem","grifo","arqueiro","mago"].includes(type) ? type : "normal",
+    behavior: type === "vaca" ? "passive" : ["lobisomem","grifo","arqueiro"].includes(type) ? type : "normal",
     islobisomem: type === "lobisomem"
   };
   updateEnemyPosition(id);
@@ -2467,7 +2466,6 @@ function initPreviews() {
         position: "absolute",
         width: `${cellSize}px`,
         height: `${cellSize}px`,
-        pointerEvents: "none",
         transform: "translate(-50%, -50%)",
         display: "none",
         zIndex: 999,
@@ -3108,6 +3106,7 @@ function placeSmooth(x, y) {
 </body>
 
 </html>
+
 
 
 
