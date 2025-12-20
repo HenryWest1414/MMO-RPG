@@ -175,16 +175,54 @@ body {
 .obstacle.fornalha          { background-image: url('fornalha.jpeg.png'); }
 .obstacle.bancada           { background-image: url('bancada.jpeg.png'); }
 /* ==== [ ENTITYS ] ==== */
-.enemy           { background-size: cover; z-index: 999; border-radius: 4px; }
-.enemy.vaca      { background-image: url('cow.jpeg.gif'); }
-.enemy.lagosta   { background-image: url('lagosta.jpeg.gif'); }
-.enemy.zumbi     { background-image: url('zumbi.jpeg.gif'); }
-.enemy.lobisomem { background-image: url('lobisomem.jpeg.png'); }
-.enemy.grifo     { background-image: url('grifo.jpeg.png'); }
-.enemy.lobisomem, .enemy.grifo, .obstacle.largetree {
+.enemy                { background-size: cover; z-index: 999; }
+.enemy.vaca           { background-image: url('cow.jpeg.gif'); }
+.enemy.esqueleto      { background-image: url('esqueleto.jpeg.png'); }
+.enemy.touro          { background-image: url('touro.jpeg.png'); }
+.enemy.cavalo         { background-image: url('cavalo.jpeg.png'); }
+.enemy.lagosta        { background-image: url('lagosta.jpeg.gif'); }
+.enemy.zumbi          { background-image: url('zumbi.jpeg.gif'); }
+.enemy.lobisomem      { background-image: url('lobisomem.jpeg.png'); }
+.enemy.grifo          { background-image: url('grifo.jpeg.png'); }
+.enemy.crocodilo      { background-image: url('crocodilo.jpeg.png'); }
+.enemy.hydra          { background-image: url('hydra.jpeg.png'); }
+.enemy.porco          { background-image: url('porco.jpeg.gif'); }
+.enemy.slime          { background-image: url('slime.jpeg.png'); }
+.enemy.generallagosta { background-image: url('generallagosta.jpeg.gif'); }
+.enemy.golem          { background-image: url('golem.jpeg.png'); }
+.enemy.boss           { background-image: url('dragon.jpeg.png'); }
+.enemy.dragaoselvagem { background-image: url('dragaoselvagem.jpeg.png'); }
+.enemy.dragaoanciao   { background-image: url('dragaoanciao.jpeg.png'); }
+.enemy.vermilson      { background-image: url('vermilson.jpeg.gif'); }
+.enemy.urso           { background-image: url('urso.jpeg.gif'); }
+.enemy.peru           { background-image: url('peru.jpeg.gif'); }
+.enemy.tanquedeguerra { background-image: url('tanquedeguerra.jpeg.gif'); }
+.enemy.lobisomem, .enemy.grifo, .enemy.urso, .enemy.enemy.crocodilo, .obstacle.largetree {
   width: 60px;
   height: 60px;
   transform: translate(-30px, -40px);
+}
+.enemy.hydra, .enemy.generallagosta, .enemy.tanquedeguerra, .enemy.dragaoselvagem, .enemy.dragaoanciao, .enemy.vermilson, .enemy.boss, .enemy.golem {
+  width: 108px;
+  height: 108px;
+  transform: translate(-54px, -88px);
+}
+.enemy-hp {
+  bottom: 40px;
+}
+.enemy.hydra .enemy-hp,
+.enemy.generallagosta .enemy-hp,
+.enemy.dragaoselvagem .enemy-hp,
+.enemy.dragaoanciao .enemy-hp,
+.enemy.golem .enemy-hp,
+.enemy.tanquedeguerra .enemy-hp,
+.enemy.vermilson .enemy-hp {
+  bottom: 110px; /* sobe a barra */
+}
+.enemy.grifo .enemy-hp,
+.enemy.crocodilo .enemy-hp,
+.enemy.lobisomem .enemy-hp {
+  bottom: 60px;
 }
 #boss-hud {
   position: fixed;
@@ -748,22 +786,27 @@ body, .map, .chat, #chat-box {
   <h3>🛠️ Editor de Mapa</h3>
   <div class="editor-section">
     <h4>👾 Criaturas</h4>
-    <button onclick="createEnemy(gridX, gridY, 'aldeão')">Aldeão</button>
-    <button onclick="createEnemy(gridX, gridY, 'arqueiro')">Arqueiro</button>
-    <button onclick="spawnBoss(gridX, gridY, 'dragão')">Dragão</button>
-    <button onclick="spawnBoss(gridX, gridY, 'general lagosta')">General Lagosta</button>
-    <button onclick="createEnemy(gridX, gridY, 'dragão Ancião')">Dragão Ancião</button>
-    <button onclick="createEnemy(gridX, gridY, 'esqueleto')">Esqueleto</button>
-    <button onclick="createEnemy(gridX, gridY, 'fantasma')">Fantasma</button>
-    <button onclick="createEnemy(gridX, gridY, 'golem')">Golem</button>
-    <button onclick="createEnemy(gridX, gridY, 'grifo')">Grifo</button>
-    <button onclick="createEnemy(gridX, gridY, 'lagosta')">Lagosta</button>
-    <button onclick="createEnemy(gridX, gridY, 'lobisomem')">Lobisomem</button>
-    <button onclick="createEnemy(gridX, gridY, 'pinguim')">Pinguim</button>
-    <button onclick="createEnemy(gridX, gridY, 'porco')">Porco</button>
-    <button onclick="createEnemy(gridX, gridY, 'urso')">Urso</button>
-    <button onclick="createEnemy(gridX, gridY, 'vaca')">Vaca</button>
-    <button onclick="createEnemy(gridX, gridY, 'zumbi')">Zumbi</button>
+    <button onclick="createEnemy(gridX, gridY, 'cavalo')">🐎</button>
+    <button onclick="createEnemy(gridX, gridY, 'crocodilo')">🐊</button>
+    <button onclick="spawnBoss  (gridX, gridY, 'Dragão')">🐉</button>
+    <button onclick="createEnemy(gridX, gridY, 'dragaoanciao')">🐉</button>
+    <button onclick="createEnemy(gridX, gridY, 'dragaoselvagem')">🐉</button>
+    <button onclick="createEnemy(gridX, gridY, 'esqueleto')">💀</button>
+    <button onclick="createEnemy(gridX, gridY, 'generallagosta')">🪖</button>
+    <button onclick="createEnemy(gridX, gridY, 'golem')">🌲</button>
+    <button onclick="createEnemy(gridX, gridY, 'grifo')">🦅</button>
+    <button onclick="createEnemy(gridX, gridY, 'hydra')">🐍</button>
+    <button onclick="createEnemy(gridX, gridY, 'lagosta')">🦞</button>
+    <button onclick="createEnemy(gridX, gridY, 'lobisomem')">🐺</button>
+    <button onclick="createEnemy(gridX, gridY, 'peru')">peru</button>
+    <button onclick="createEnemy(gridX, gridY, 'porco')">🐷</button>
+    <button onclick="createEnemy(gridX, gridY, 'slime')">🟢</button>
+    <button onclick="createEnemy(gridX, gridY, 'vaca')">🐄</button>
+    <button onclick="createEnemy(gridX, gridY, 'vermilson')">🪱</button>
+    <button onclick="createEnemy(gridX, gridY, 'tanquedeguerra')">tanquedeguerra</button>
+    <button onclick="createEnemy(gridX, gridY, 'touro')">🐂</button>
+    <button onclick="createEnemy(gridX, gridY, 'urso')">urso</button>
+    <button onclick="createEnemy(gridX, gridY, 'zumbi')">🧟</button>
   </div>
   <div class="editor-section">
   <h4>🎒 Adicionar Itens à Mochila</h4>
@@ -3106,6 +3149,7 @@ function placeSmooth(x, y) {
 </body>
 
 </html>
+
 
 
 
