@@ -2143,24 +2143,39 @@ function createEnemy(x, y, type = "zumbi") {
   (type === "lagosta" ? mapContentSecond : mapContent).appendChild(enemy);
   const typeImages = {
     zumbi: "zumbi.jpeg.gif",
+    dragaoselvagem: "dragaoselvagem.jpeg.png",
+    dragaoanciao: "dragaoanciao.jpeg.png",
     lobisomem: "lobisomem.jpeg.png",
+    grifo: "grifo.jpeg.png",
+    golem: "golem.jpeg.png",
+    hydra: "hydra.jpeg.png",
+    porco: "porco.jpeg.gif",
+    peru: "peru.jpeg.gif",
+    tanquedeguerra: "tanquedeguerra.jpeg.gif",
+    urso: "urso.jpeg.gif",
+    esqueleto: "esqueleto.jpeg.png",
+    slime: "slime.jpeg.png",
+    generallagosta: "generallagosta.jpeg.gif",
+    crocodilo: "crocodilo.jpeg.png",
     lagosta: "lagosta.jpeg.gif",
     vaca: "cow.jpeg.gif",
-    grifo: "cow.jpeg.png"
+    vermilson: "vermilson.jpeg.gif",
+    touro: "touro.jpeg.png",
+    cavalo: "cavalo.jpeg.png"
   };
   const imagePath = typeImages[type] || "slime.jpeg.png";
   enemy.style.backgroundImage = `url('${imagePath}')`;
   enemy.style.backgroundSize = "cover";
   const baseHp = type === "golem" ? 80 : 30;
   enemies[id] = {
-    id,  
+    id,
     x, y,
     hp: baseHp,
     maxHp: baseHp,
     element: enemy,
     hpFill,
     type,
-    behavior: type === "vaca" ? "passive" : ["lobisomem","grifo","arqueiro"].includes(type) ? type : "normal",
+    behavior: type === "vaca" ? "passive" : ["lobisomem","tanquedeguerra","dragaoanciao","peru","urso","grifo","esqueleto","dragaoselvagem","generallagosta","hydra","vermilson","porco","slime","golem","crocodilo","cavalo","touro"].includes(type) ? type : "normal",
     islobisomem: type === "lobisomem"
   };
   updateEnemyPosition(id);
@@ -3153,6 +3168,7 @@ function placeSmooth(x, y) {
 </body>
 
 </html>
+
 
 
 
