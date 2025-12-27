@@ -91,23 +91,6 @@ body {
   padding: 8px;
   margin: 5px 0;
 }
-.chat {
-  background-color: #333;
-  padding: 5px;
-  margin-top: 10px;
-  height: 100px;
-  overflow-y: auto;
-  font-size: 12px;
-  border-radius: 5px;
-}
-.chat input {
-  width: 100%;
-  padding: 5px;
-  margin-top: 5px;
-  border: none;
-  border-radius: 4px;
-  color: #fff;
-}
 #editor-panel {
   display: none;              /* começa oculto */
   position: fixed;            /* ocupa a tela inteira */
@@ -144,7 +127,6 @@ body {
 #editor-panel button:hover {
   background-color: #666;
 }
-/* Botão de fechar fixo no topo */
 #close-panel {
   position: sticky;
   top: 0;
@@ -283,20 +265,22 @@ background-color: #666;
   background-color: transparent;
   border: none;
   cursor: pointer;
-  z-index: 1000;
+  z-index: 1001;
 }
 #settings-panel {
   display: none;
   position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: #222;
-  border: 2px solid #555;
+  top: 20px;              /* mesmo top do botão */
+  right: 70px;            /* desloca para a esquerda do botão */
   padding: 10px;
-  z-index: 1000;
+  z-index: 1001;
   color: #fff;
-  opacity: 0.85;
+  background-color: #333;
+  color: white;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  background-color: rgba(0,0,0,0.8); /* opcional para contraste */
 }
 .settings-section {
   margin-bottom: 15px;
@@ -500,7 +484,6 @@ body, .map, .chat, #chat-box {
 }
 .menu-btn:hover { transform: scale(1.05); filter: brightness(1.2); }
 .menu-btn:active { transform: scale(0.97); }
-/* Canvas da chuva */
 #rainCanvas {
   position: fixed;
   top: 0;
@@ -510,10 +493,95 @@ body, .map, .chat, #chat-box {
   pointer-events: none;
   z-index: 996; /* acima do mapa, abaixo do HUD */
 }
-/* Filtro azul da chuva */
+#craft-floating-panel {
+  display: none; /* começa oculto */
+  position: fixed; /* fixo na tela */
+  top: 0;
+  right: 0; /* canto direito */
+  width: 220px; /* largura da HUD */
+  height: 100%; /* ocupa toda a altura */
+  background: #222;
+  border-left: 2px solid #555;
+  padding: 12px;
+  z-index: 1000;
+  overflow-y: auto; /* ativa barra de rolagem */
+  opacity: 0.9;
+}
+#craft-floating-panel input {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 180px; /* ou qualquer valor menor que 100% */
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #555;
+  background: #333;
+  color: #fff;
+}
+#craft-floating-panel h4 {
+  color: #fff;
+  margin: 60px 0 12px; /* espaço extra no topo */
+  text-align: center;
+}
+.craft-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* duas colunas */
+  gap: 10px;
+}
+.craft-grid button {
+  background: #333;
+  border: 1px solid #555;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
+}
+.craft-grid button:hover {
+  background: #444;
+  transform: scale(1.05);
+}
+.craft-grid img {
+  width: 40px;
+  height: 40px;
+}
+.close-btn {
+  position: absolute;   /* fixa dentro do painel */
+  top: 10px;            /* distância do topo */
+  left: 10px;           /* distância da esquerda */
+  background: #333;
+  color: white;
+  border: 1px solid #555;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  width: auto;          /* não ocupa toda a largura */
+}
+.close-btn:hover {
+  background: #444;
+}
+#attack-button {
+  position: fixed;
+  bottom: 80px;   /* fica acima do botão de cura */
+  left: 80px;     /* mesma posição horizontal do botão de cura */
+  background-color: #333;
+  color: white;
+  border: 2px solid #555;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  z-index: 1000;
+  transition: background-color 0.2s ease;
+  opacity: 0.7;
+}
+#attack-button:hover {
+  background-color: #555;
+}
 </style>
 </head>
 <body>
+<button id="attack-button" onclick="performAttack()">⚔️</button>
   <div id="hand-buttons">
   <button onclick="setMainHand('right')">🖐️</button>
   <button onclick="setMainHand('left')">🤚</button>
@@ -638,12 +706,8 @@ body, .map, .chat, #chat-box {
 </div>
    <button id="settings-button"></button>
    <div id="settings-panel">
-  <h3>🎒 Inventário</h3>
-  <div class="settings-section">
-    <button onclick="openBackpackPanel()">🎒 Abrir Mochila</button>
-    <button onclick="openCraftPanel()">🧪 Abrir Craft</button>
-    <div>🌱 Seed: <span id="seed-display">-</span></div>
-    <div class="settings-section">
+    <button onclick="openBackpackPanel()">🎒</button>
+    <button onclick="openCraftPanel()">🧪</button>
 </div>
   </div>
 </div>
@@ -672,7 +736,7 @@ body, .map, .chat, #chat-box {
     border-radius: 6px;
     font-size: 14px;
     cursor: pointer;
-  ">❌ Sair</button>
+  ">❌</button>
   <!-- Conteúdo central -->
   <div style="margin-top: 80px; text-align: center; color: white;">
     <h1>⚙️ Configurações</h1>
@@ -683,6 +747,7 @@ body, .map, .chat, #chat-box {
         <input type="checkbox" id="extra-zoom-toggle" onchange="toggleZoomBarFromExtra()" checked>
         🔍 Habilitar controle de Zoom
         <button onclick="returnToMenu()">🏠 Menu</button>
+        <div>🌱 Seed: <span id="seed-display">-</span></div>
       </label>
     </div>
     <div style="margin-top: 20px;">
@@ -694,10 +759,10 @@ body, .map, .chat, #chat-box {
   </div>
 </div>
 <!-- Painel de Chat Flutuante -->
-<div id="chat-panel" style="display:none; position:absolute; bottom:90px; left:20px; width:300px; background:#222; border:2px solid #555; border-radius:8px; padding:10px; z-index:1000;">
-  <h4 style="color:#fff; margin:0 0 10px;">💬 Chat</h4>
-  <div id="chat-box" style="height:130px; overflow-y:auto; background:#333; padding:5px; border-radius:5px; font-size:12px;"></div>
-  <input type="text" placeholder="Digite uma mensagem..." onkeydown="sendMessage(event)" maxlength="100" style="width:96%; margin-top:8px; padding:6px; border:none; border-radius:4px; background:#444; color:#fff;">
+<div id="chat-panel" style="display:none; position:absolute; bottom:90px; left:20px; width:260px; background:#222; border:2px solid #555; border-radius:8px; padding:8px; z-index:1000;">
+  <h4 style="color:#fff; margin:0 0 8px; font-size:14px;">💬 Chat</h4>
+  <div id="chat-box" style="height:100px; overflow-y:auto; background:#333; padding:4px; border-radius:5px; font-size:11px;"></div>
+  <input type="text" placeholder="Digite uma mensagem..." onkeydown="sendMessage(event)" maxlength="100" style="width:96%; margin-top:6px; padding:5px; border:none; border-radius:4px; background:#444; color:#fff; font-size:11px;">
 </div>
 <div id="fixed-status-bars">
   <div>⚔️ Nível: <span id="player-level">1</span> | XP: <span id="player-xp">0</span></div>
@@ -746,33 +811,33 @@ body, .map, .chat, #chat-box {
   <div class="map-content" id="mapContentSecond" style="display:none;"></div>
 </div>
     </div>
-     <div class="inventory">
+    <div class="inventory">
   <div>
-    <div id="craft-floating-panel" style="display:none; position:absolute; top:120px; left:354px; width:150px; background:#222; border:2px solid #555; border-radius:8px; padding:10px; z-index:1000;">
-      <h4 style="color:#fff; margin:0 0 10px;">🧪 Painel de Craft</h4>
-      <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:10px;">
-        <button onclick="craftPotion()" style="background:#333; border:1px solid #555; padding:8px; border-radius:6px; cursor:pointer;">
-          <img src="item_poção.jpeg.png" alt="Poção de Cura" style="width:40px; height:40px;">
-        </button>
-        <button onclick="craftAxe()" style="background:#333; border:1px solid #555; padding:8px; border-radius:6px; cursor:pointer;">
-          <img src="item_machado.jpeg.png" alt="Machado" style="width:40px; height:40px;">
-        </button>
-        <button onclick="craftShovel()" style="background:#333; border:1px solid #555; padding:8px; border-radius:6px; cursor:pointer;">
-          <img src="item_pá.jpeg.png" alt="Pá" style="width:40px; height:40px;">
-        </button>
-        <button onclick="craftPlanks()" style="background:#333; border:1px solid #555; padding:8px; border-radius:6px; cursor:pointer;">
-          <img src="plank.jpeg.png" alt="Tábuas de Madeira" style="width:40px; height:40px;">
-        </button>
-        <button onclick="craftPickaxe()" style="background:#333; border:1px solid #555; padding:8px; border-radius:6px; cursor:pointer;">
-          <img src="item_picareta.jpeg.png" alt="Picareta" style="width:40px; height:40px;">
-        </button>
-      </div>
-      <button onclick="closeCraftPanel()" style="margin-top:10px; background:#333; color:white; border:1px solid #555; padding:6px 12px; border-radius:6px; cursor:pointer;">❌ Fechar</button>
-    </div>
+<div id="craft-floating-panel"> <!-- Botão de fechar no canto superior esquerdo --> 
+  <button class="close-btn" onclick="closeCraftPanel()">❌</button>
+  <h4>🧪 Painel de Craft</h4>
+  <div class="craft-grid">
+    <button onclick="craftPotion()">
+      <img src="item_poção.jpeg.png" alt="Poção de Cura">
+    </button>
+    <button onclick="craftAxe()">
+      <img src="item_machado.jpeg.png" alt="Machado">
+    </button>
+    <button onclick="craftShovel()">
+      <img src="item_pá.jpeg.png" alt="Pá">
+    </button>
+    <button onclick="craftPlanks()">
+      <img src="plank.jpeg.png" alt="Tábuas de Madeira">
+    </button>
+    <button onclick="craftPickaxe()">
+      <img src="item_picareta.jpeg.png" alt="Picareta">
+    </button>
   </div>
+  <!-- Input fixo no rodapé -->
+  <input type="text" placeholder="Pesquisar...">
 </div>
   </div>
-    </div>
+</div>
 <div id="backpack-floating-panel" style="display:none; position:absolute; top:120px; left:80px; width:250px; background:#222; border:2px solid #555; border-radius:8px; padding:10px; z-index:1000;">
   <h4 style="color:#fff; margin:0 0 10px;">🎒 Mochila</h4>
   <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:10px;">
@@ -792,7 +857,7 @@ body, .map, .chat, #chat-box {
     </div>
   </div>
 <div id="editor-panel">
-  <h3>🛠️ Editor de Mapa <button id="close-panel" onclick="closeEditor()">❌ Fechar</button></h3>
+  <h3>🛠️ Editor de Mapa <button id="close-panel" onclick="closeEditor()">❌</button></h3>
   <div class="editor-section">
     <h4>👾 Criaturas</h4>
     <button onclick="createEnemy(gridX, gridY, 'cavalo')">🐎</button>
@@ -900,6 +965,46 @@ function setCharacterDirection(dx, dy, isMoving) {
 function setMainHand(hand) {
   mainHand = hand;
 }
+function performAttack() {
+  if (lastHighlightedObstacle) {
+    const id = lastHighlightedObstacle.id;
+    obstacleSpaceClicks[id] = (obstacleSpaceClicks[id] || 0) + 1;
+    const el = document.getElementById(id);
+    if (el) {
+      el.dataset.clicks = `${obstacleSpaceClicks[id]}`;
+      incrementObstacleClicks(id);
+    }
+  }
+  if (canAttackWithSpace) {
+    let atacou = false;
+    if (lastHighlightedEntity) {
+      const idHL = lastHighlightedEntity.id;
+      if (idHL === "boss" && boss) {
+        damageEntity(boss, 1, true);
+        atacou = true;
+      } else if (enemies[idHL]) {
+        damageEntity(enemies[idHL], 1, false);
+        atacou = true;
+      }
+    }
+    if (!atacou) {
+      for (const id in enemies) {
+        const e2 = enemies[id];
+        if (Math.abs(gridX - e2.x) + Math.abs(gridY - e2.y) <= 1) {
+          damageEntity(e2, 1, false);
+          atacou = true;
+          break;
+        }
+      }
+      if (!atacou && boss && Math.abs(gridX - boss.x) + Math.abs(gridY - boss.y) <= 1) {
+        damageEntity(boss, 1, true);
+      }
+    }
+    canAttackWithSpace = false;
+    setTimeout(() => (canAttackWithSpace = true), 1000);
+  }
+}
+
 function placeObstacle(type) {
   const id = `obstacle-${type}-${gridX}-${gridY}`;
   if (document.getElementById(id)) return;
@@ -1914,9 +2019,7 @@ function placePlankObstacle() {
   plank.dataset.type = "plank";
   plank.dataset.orientation = "horizontal";
   mapContent.appendChild(plank);
-  updatePlankTexture(gridX, gridY);
-  updatePlankTexture(gridX, gridY - 1);
-  updatePlankTexture(gridX, gridY + 1);
+[0, -1, 1].forEach(offsetY => updatePlankTexture(gridX, gridY + offsetY));
 }
 function updatePlankTexture(x, y) {
   const current = document.getElementById(`obstacle-plank-${x}-${y}`);
@@ -2385,58 +2488,6 @@ function checkEnterSecondFloor() {
     hasDescendedByCave = true;
   }
 }
-function checkAndExpandMapIfAtEdge() {
-  const margin = 2;
-  const seedOffset = Math.floor(Math.random() * 100000);
-  ["left", "right", "top", "bottom"].forEach(dir => {
-  const edge = {
-    left: gridX <= margin,
-    right: gridX >= mapCols - margin - 1,
-    top: gridY <= margin,
-    bottom: gridY >= mapRows - margin - 1
-  };
-  if (edge[dir] && !expandedDirections[dir]) {
-    expandedDirections[dir] = true;
-    expandMap(dir, seedOffset);
-  }
-});
-}
-function expandMap(direction, seed) {
-  const offsetX = direction === "left" ? -mapCols : direction === "right" ? mapCols : 0;
-  const offsetY = direction === "top" ? -mapRows : direction === "bottom" ? mapRows : 0;
-  const rng = createSeededRNG(seed);
-  const referenceElements = [];
-  for (let x = 0; x < mapCols; x++) {
-    for (let y = 0; y < mapRows; y++) {
-      const key = `${x}-${y}`;
-      referenceElements.push({
-        terrain: terrainMap[key],
-        tree: document.getElementById(`obstacle-tree-${x}-${y}`),
-        rock: document.getElementById(`obstacle-rock-${x}-${y}`)
-      });
-    }
-  }
-  referenceElements.forEach((ref, i) => {
-  const x = i % mapCols;
-  const y = Math.floor(i / mapCols);
-  const globalX = x + offsetX;
-  const globalY = y + offsetY;
-  const key = `${globalX}-${globalY}`;
-    terrainMap[key] = ref.terrain;
-  const createElement = (className, idSuffix) => {
-  const el = document.createElement("div");
-    el.className = className;
-    el.id = `${idSuffix}-${globalX}-${globalY}`;
-    el.style.left = `${globalX * cellSize}px`;
-    el.style.top = `${globalY * cellSize}px`;
-    el.style.position = "absolute";
-    mapContent.appendChild(el);
-};
-    createElement(`tile ${ref.terrain}`, "terrain");
-    if (ref.tree && rng() < 0.8) createElement("obstacle tree", "obstacle-tree");
-    if (ref.rock && rng() < 0.8) createElement("obstacle rock", "obstacle-rock");
-  });
-}
 function censorMessage(text) {
   const blacklist = ['abacaxi', 'palavrão', 'nanismo', 'westo', 'catapimbas', 'proibido'];
   blacklist.forEach(word => {
@@ -2587,7 +2638,6 @@ function initPreviews() {
       const exists = document.getElementById(`obstacle-plank-${x}-${y}`);
       Object.assign(plankPreview.style, { left: `${x * cellSize}px`, top: `${y * cellSize}px`, display: "block", opacity: exists ? "0.2" : "0.5" });
     } else plankPreview.style.display = "none";
-
     if (item === "pá") {
       const terrain = terrainMap[`${x}-${y}`];
       const diggable = terrain && terrain !== "water" && terrain !== "deepwater";
@@ -2743,7 +2793,33 @@ function animateSmoothMovement() {
   }
   animationFrameId = requestAnimationFrame(animateSmoothMovement);
 }
+// Raio de detecção e ataque
+const ENEMY_AGGRO_RADIUS = 4;   // distância em tiles para começar a perseguir
+const ENEMY_ATTACK_RADIUS = 1;  // distância mínima para causar dano
+const ENEMY_DAMAGE = 1;         // dano base
 function animateMob(entity) {
+  // Se inimigo for agressivo
+  if (["lobisomem", "esqueleto", "zumbi"].includes(entity.type)) {
+    const dist = Math.abs(gridX - entity.x) + Math.abs(gridY - entity.y);
+
+    // Se jogador está dentro do raio de perseguição
+    if (dist <= ENEMY_AGGRO_RADIUS) {
+      const path = findMobPath(entity, entity.x, entity.y, gridX, gridY);
+      if (path.length) {
+        entity.pathQueue = path;
+        entity.moving = true;
+      }
+    }
+
+    // Se jogador está muito perto, causar dano
+    if (dist <= ENEMY_ATTACK_RADIUS) {
+      hp -= ENEMY_DAMAGE;
+      updateHUD();
+      if (hp <= 0) showRespawnScreen();
+    }
+  }
+
+  // Movimento normal do mob (já existente)
   if (entity.waitUntil && performance.now() < entity.waitUntil) return;
   if (!entity.moving) {
     planMobPath(entity);
@@ -2756,16 +2832,16 @@ function animateMob(entity) {
   }
   const dx = entity.targetPixelX - entity.pixelX;
   const dy = entity.targetPixelY - entity.pixelY;
-  const dist = Math.hypot(dx, dy);
+  const distPix = Math.hypot(dx, dy);
   const effectiveSpeed = MOB_SPEED_PIXELS_PER_FRAME / 3;
-  if (dist < effectiveSpeed) {
+  if (distPix < effectiveSpeed) {
     entity.pixelX = entity.targetPixelX;
     entity.pixelY = entity.targetPixelY;
     entity.x = entity.nextTileX;
     entity.y = entity.nextTileY;
     startMobStep(entity);
   } else {
-  const angle = Math.atan2(dy, dx);
+    const angle = Math.atan2(dy, dx);
     entity.pixelX += Math.cos(angle) * effectiveSpeed;
     entity.pixelY += Math.sin(angle) * effectiveSpeed;
   }
@@ -2807,21 +2883,24 @@ const spawnTimers = {};
 const MAX_ENTITIES = 30; // <-- AQUI você muda o limite
 function autoSpawn() {
   const now = Date.now();
-  if (Object.keys(enemies).length >= MAX_ENTITIES) {
-    return;
-  }
+  if (Object.keys(enemies).length >= MAX_ENTITIES) return;
   const spawn = (key, interval, condition, getType) => {
-    if (!spawnTimers[key] || now - spawnTimers[key] >= interval) {
-      const { x, y, terrain } = getRandomTile();
-      if (condition(terrain)) {
-        createEnemy(x, y, getType(terrain));
-        spawnTimers[key] = now;
-      }
-    }
+    const last = spawnTimers[key] || 0;
+    if (now - last < interval) return;
+    const { x, y, terrain } = getRandomTile();
+    if (!condition(terrain)) return;
+    createEnemy(x, y, getType(terrain));
+    spawnTimers[key] = now;
   };
+  const randomPick = arr => arr[Math.floor(Math.random() * arr.length)];
+  const dayEntities = ["vaca", "peru", "touro","slime","urso","cavalo"];
+  const nightEntities = ["zumbi","lobisomem","esqueleto"]; // pode expandir futuramente
   spawn("lastLagosta", 10000, t => t === "deepwater", () => "lagosta");
-  spawn("lastCreature", 5000, t => t !== "water" && t !== "deepwater",
-    () => isDay ? "vaca" : "zumbi"
+  spawn(
+    "lastCreature",
+    5000,
+    t => t !== "water" && t !== "deepwater",
+    () => isDay ? randomPick(dayEntities) : randomPick(nightEntities)
   );
 }
 setInterval(autoSpawn, 1000);
@@ -2862,8 +2941,8 @@ function generateTerrainGrid(cols = 64, rows = 64, seed = Date.now()) {
   mapCols = cols;
   mapRows = rows;
   const rng = createSeededRNG(seed);
-  const terrainMap = {}, treeMap = {}, rockMap = {}, poppyMap = {}, caveMap = {}, largetreeMap = {};
-  const caveEntrances = []; // entradas de cavernas para sincronizar com o segundo andar
+  const terrainMap = {}, treeMap = {}, rockMap = {}, poppyMap = {}, caveMap = {}, largetreeMap = {}, cactusMap = {};
+  const caveEntrances = [];
   const total = cols * rows;
   const targets = {
     water: Math.floor(total * 0.05),
@@ -2871,13 +2950,14 @@ function generateTerrainGrid(cols = 64, rows = 64, seed = Date.now()) {
     rock: Math.floor(total * 0.02),
     poppy: Math.floor(total * 0.02),
     cave: Math.floor(total * 0.01),
-    largetree: Math.floor(total * 0.01)
+    largetree: Math.floor(total * 0.03),
+    cactus: Math.floor(total * 0.05)
   };
   const r = rng();
-let terrainType = "default"; // valor padrão
-if (r < 0.2) terrainType = "snow";
-else if (r < 0.35) terrainType = "desert";
-else if (r < 0.5) terrainType = "island";
+  let terrainType = "default";
+  if (r < 0.2) terrainType = "snow";
+  else if (r < 0.35) terrainType = "desert";
+  else if (r < 0.5) terrainType = "island";
   const isValid = (x, y) => x >= 0 && x < cols && y >= 0 && y < rows;
   const neighbors = (x, y) => [-1, 0, 1].flatMap(dx =>
     [-1, 0, 1].filter(dy => dx || dy).map(dy => [x + dx, y + dy])
@@ -2887,8 +2967,8 @@ else if (r < 0.5) terrainType = "island";
       terrainMap[`${x}-${y}`] = terrainType === "desert" ? "sand" :
                                 terrainType === "snow" ? "snow" : "grass";
   if (terrainType === "island") {
-  const [cx, cy] = [Math.floor(cols / 2), Math.floor(rows / 2)];
-  const radius = Math.floor(Math.min(cols, rows) / 3);
+    const [cx, cy] = [Math.floor(cols / 2), Math.floor(rows / 2)];
+    const radius = Math.floor(Math.min(cols, rows) / 3);
     for (let x = 0; x < cols; x++) {
       for (let y = 0; y < rows; y++) {
         const dist = Math.hypot(cx - x, cy - y);
@@ -2898,7 +2978,7 @@ else if (r < 0.5) terrainType = "island";
     }
   }
   const generateWater = (base) => {
-  const queue = [], seeds = Math.max(1, Math.floor(targets.water / 45));
+    const queue = [], seeds = Math.max(1, Math.floor(targets.water / 45));
     for (let i = 0; i < seeds; i++) {
       const [x, y] = [Math.floor(rng() * cols), Math.floor(rng() * rows)];
       terrainMap[`${x}-${y}`] = "water";
@@ -2917,61 +2997,14 @@ else if (r < 0.5) terrainType = "island";
       }
     }
   };
-  const markDeepWater = () => {
-    const visited = new Set();
-    const bfs = (x, y) => {
-      const cluster = [], q = [{ x, y }];
-      visited.add(`${x}-${y}`);
-      while (q.length) {
-        const { x, y } = q.shift();
-        cluster.push({ x, y });
-        for (const [nx, ny] of neighbors(x, y)) {
-          const key = `${nx}-${ny}`;
-          if (isValid(nx, ny) && terrainMap[key] === "water" && !visited.has(key)) {
-            visited.add(key);
-            q.push({ x: nx, y: ny });
-          }
-        }
-      }
-      return cluster;
-    };
-    for (let x = 0; x < cols; x++) {
-      for (let y = 0; y < rows; y++) {
-        const key = `${x}-${y}`;
-        if (terrainMap[key] === "water" && !visited.has(key)) {
-          const cluster = bfs(x, y);
-          if (cluster.length < 9) continue;
-          const [avgX, avgY] = [
-            Math.round(cluster.reduce((s, p) => s + p.x, 0) / cluster.length),
-            Math.round(cluster.reduce((s, p) => s + p.y, 0) / cluster.length)
-          ];
-          const deepTiles = [];
-          let canPlace = true;
-          for (let dx = -1; dx <= 1 && canPlace; dx++) {
-            for (let dy = -1; dy <= 1; dy++) {
-              const [nx, ny] = [avgX + dx, avgY + dy];
-              const nk = `${nx}-${ny}`;
-              if (!isValid(nx, ny) || terrainMap[nk] !== "water") {
-                canPlace = false;
-                break;
-              }
-              deepTiles.push(nk);
-            }
-          }
-          if (canPlace) deepTiles.forEach(k => terrainMap[k] = "deepwater");
-        }
-      }
-    }
-  };
   if (["default", "snow"].includes(terrainType)) {
     const base = terrainType === "snow" ? "snow" : "grass";
     generateWater(base);
-    markDeepWater();
     if (base === "grass") {
       for (let x = 0; x < cols; x++)
         for (let y = 0; y < rows; y++) {
           const key = `${x}-${y}`;
-          if (["water", "deepwater"].includes(terrainMap[key])) {
+          if (terrainMap[key] === "water") {
             for (const [nx, ny] of neighbors(x, y)) {
               const nk = `${nx}-${ny}`;
               if (isValid(nx, ny) && terrainMap[nk] === "grass")
@@ -2981,90 +3014,84 @@ else if (r < 0.5) terrainType = "island";
         }
     }
   }
-const generateNature = (target, map, exclude, baseChance, decay, avoid = {}, strictSpacing = false) => {
-  const queue = [];
-  for (let i = 0; i < Math.max(1, Math.floor(target / 10)); i++) {
-    const [x, y] = [Math.floor(rng() * cols), Math.floor(rng() * rows)];
-    const key = `${x}-${y}`;
-    if (exclude.includes(terrainMap[key]) || avoid[key]) continue;
-    if (strictSpacing) {
-      let blocked = false;
+  const generateNature = (target, map, exclude, baseChance, decay, avoid = {}, strictSpacing = false) => {
+    const queue = [];
+    for (let i = 0; i < Math.max(1, Math.floor(target / 10)); i++) {
+      const [x, y] = [Math.floor(rng() * cols), Math.floor(rng() * rows)];
+      const key = `${x}-${y}`;
+      if (exclude.includes(terrainMap[key]) || avoid[key]) continue;
+      if (strictSpacing) {
+        let blocked = false;
+        for (const [nx, ny] of neighbors(x, y)) {
+          const nKey = `${nx}-${ny}`;
+          if (map[nKey] || avoid[nKey]) { blocked = true; break; }
+        }
+        if (blocked) continue;
+      }
+      map[key] = true;
+      queue.push({ x, y, depth: 0 });
+    }
+    let placed = queue.length;
+    while (queue.length && placed < target) {
+      const { x, y, depth } = queue.shift();
+      const chance = baseChance - depth * decay;
       for (const [nx, ny] of neighbors(x, y)) {
-        const nKey = `${nx}-${ny}`;
-        if (map[nKey] || avoid[nKey]) {
-          blocked = true;
-          break;
-        }
-      }
-      if (blocked) continue;
-    }
-    map[key] = true;
-    queue.push({ x, y, depth: 0 });
-  }
-  let placed = queue.length;
-  while (queue.length && placed < target) {
-    const { x, y, depth } = queue.shift();
-    const chance = baseChance - depth * decay;
-    for (const [nx, ny] of neighbors(x, y)) {
-      const key = `${nx}-${ny}`;
-      if (
-        isValid(nx, ny) &&
-        !map[key] &&
-        !exclude.includes(terrainMap[key]) &&
-        !avoid[key] &&
-        rng() < chance
-      ) {
-        if (strictSpacing) {
-          let blocked = false;
-          for (const [vx, vy] of neighbors(nx, ny)) {
-            const vKey = `${vx}-${vy}`;
-            if (map[vKey] || avoid[vKey]) {
-              blocked = true;
-              break;
+        const key = `${nx}-${ny}`;
+        if (isValid(nx, ny) && !map[key] && !exclude.includes(terrainMap[key]) && !avoid[key] && rng() < chance) {
+          if (strictSpacing) {
+            let blocked = false;
+            for (const [vx, vy] of neighbors(nx, ny)) {
+              const vKey = `${vx}-${vy}`;
+              if (map[vKey] || avoid[vKey]) { blocked = true; break; }
             }
+            if (blocked) continue;
           }
-          if (blocked) continue;
+          map[key] = true;
+          queue.push({ x: nx, y: ny, depth: depth + 1 });
+          placed++;
         }
-        map[key] = true;
-        queue.push({ x: nx, y: ny, depth: depth + 1 });
-        placed++;
+      }
+    }
+  };
+  const adjustedTree = terrainType === "island" ? Math.floor(targets.tree * 0.4) :
+                      terrainType === "snow" ? Math.floor(total * 0.25) : targets.tree;
+  const adjustedRock = terrainType === "snow" ? Math.floor(total * 0.05) :
+                      terrainType === "desert" ? Math.floor(total * 0.5) : targets.rock;
+  if (terrainType !== "desert")
+    generateNature(adjustedTree, treeMap, ["water", "deepwater", "sand"], 0.7, 0.1);
+  generateNature(adjustedRock, rockMap, ["water", "deepwater", "sand"], 0.6, 0.1, treeMap);
+  generateNature(targets.poppy, poppyMap, ["water", "deepwater", "sand"], 0.5, 0.1, { ...treeMap, ...rockMap });
+  generateNature(targets.largetree, largetreeMap, ["water", "deepwater", "sand"], 0.6, 0.1, { ...treeMap, ...rockMap, ...poppyMap }, true);
+  generateNature(targets.cave, caveMap, ["water", "deepwater", "sand"], 0.8, 0.15);
+  if (terrainType === "desert") {
+    generateNature(targets.cactus, cactusMap, ["water", "deepwater"], 0.7, 0.1);
+  }
+  for (let x = 0; x < mapCols; x++) {
+    for (let y = 0; y < mapRows; y++) {
+      const key = `${x}-${y}`;
+      if (caveMap[key]) {
+        terrainMap[key] = "caverna";
+        caveEntrances.push({ x, y });
       }
     }
   }
-};
-const adjustedTree = terrainType === "island" ? Math.floor(targets.tree * 0.4) :
-                    terrainType === "snow" ? Math.floor(total * 0.25) : targets.tree;
-const adjustedRock = terrainType === "snow" ? Math.floor(total * 0.05) :
-                    terrainType === "desert" ? Math.floor(total * 0.5) : targets.rock;
-if (terrainType !== "desert")
-  generateNature(adjustedTree, treeMap, ["water", "deepwater", "sand"], 0.7, 0.1);
-generateNature(adjustedRock, rockMap, ["water", "deepwater", "sand"], 0.6, 0.1, treeMap);
-generateNature(targets.poppy, poppyMap, ["water", "deepwater", "sand"], 0.5, 0.1, { ...treeMap, ...rockMap });
-generateNature(targets.largetree, largetreeMap, ["water", "deepwater", "sand"], 0.6, 0.1, { ...treeMap, ...rockMap, ...poppyMap }, true);
-generateNature(targets.cave, caveMap, ["water", "deepwater", "sand"], 0.8, 0.15);
-for (let x = 0; x < mapCols; x++) {
-  for (let y = 0; y < mapRows; y++) {
-    const key = `${x}-${y}`;
-    if (caveMap[key]) {
-      terrainMap[key] = "caverna";
-      caveEntrances.push({ x, y });
+  for (let x = 0; x < cols; x++) {
+    for (let y = 0; y < rows; y++) {
+      const key = `${x}-${y}`;
+      const [ox, oy] = [gridX, gridY];
+      [gridX, gridY] = [x, y];
+      placeTerrain(terrainMap[key]);
+      if (terrainMap[key] === "deepwater") {
+        deepWaterPositions.push({ x, y });
+      }
+      if (treeMap[key]) placeNature("tree");
+      if (rockMap[key]) placeNature("rock");
+      if (poppyMap[key]) placeNature("poppy");
+      if (largetreeMap[key]) placeNature("largetree");
+      if (cactusMap[key]) placeNature("cacto"); // novo para deserto
+      [gridX, gridY] = [ox, oy];
     }
   }
-}
-for (let x = 0; x < cols; x++) {
-  for (let y = 0; y < rows; y++) {
-    const key = `${x}-${y}`;
-    const [ox, oy] = [gridX, gridY];
-    [gridX, gridY] = [x, y];
-    placeTerrain(terrainMap[key]);
-    if (terrainMap[key] === "deepwater") deepWaterPositions.push({ x, y });
-    if (treeMap[key]) placeNature("tree");
-    if (rockMap[key]) placeNature("rock");
-    if (poppyMap[key]) placeNature("poppy");
-    if (largetreeMap[key]) placeNature("largetree"); // novo
-    [gridX, gridY] = [ox, oy];
-  }
- }
 }
 function generateSecondFloor() {
   const MIN_DIST = 3;     
@@ -3164,4 +3191,3 @@ function placeSmooth(x, y) {
 </script>
 </body>
 </html>
-
