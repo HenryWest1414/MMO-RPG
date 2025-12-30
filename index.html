@@ -1383,8 +1383,8 @@ settingsButton.onclick = () => {
    ? "url('backpack_close.jpeg.png')"
     : "url('backpack_open.jpeg.png')";
 };
-  let mapCols = 64;
-  let mapRows = 64;
+  let mapCols = 32;
+  let mapRows = 32;
   let selectedItemIndex = null;
   const backpackItems = []; // Armazena os itens coletados
 function eatFruit() {
@@ -2952,7 +2952,7 @@ gridX = Math.floor(mapCols / 2);
 gridY = Math.floor(mapRows / 2);
 let currentSeed = Math.floor(Math.random() * 100000);
 document.getElementById("seed-display").textContent = currentSeed;
-generateTerrainGrid(64, 64, currentSeed); // ← Aqui é onde você coloca!
+generateTerrainGrid(32, 32, currentSeed); // ← Aqui é onde você coloca!
 generateSecondFloor();
 updatePosition();
 dayNightOverlay.style.backgroundColor = "rgba(0, 0, 0, 0.2)"; // começa com dia
@@ -3016,7 +3016,7 @@ function digTileWithPickaxe(x, y) {
   tile.style.opacity = "1";
   terrainMap[key] = "caverna";
 }
-function generateTerrainGrid(cols = 64, rows = 64, seed = Date.now()) {
+function generateTerrainGrid(cols = 32, rows = 32, seed = Date.now()) {
   mapCols = cols;
   mapRows = rows;
   const rng = createSeededRNG(seed);
