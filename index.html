@@ -57,6 +57,23 @@ body {
 .character.walk-up    { background-image: url('player_up_move.jpeg.gif'); }
 .character.walk-left  { background-image: url('player_left_move.jpeg.gif'); }
 .character.walk-right { background-image: url('player_right_move.jpeg.gif'); }
+.character.water-up    { background-image: url('player_water_up.png'); }
+.character.water-down  { background-image: url('player_water_down.png'); }
+.character.water-left  { background-image: url('player_water_left.png'); }
+.character.water-right { background-image: url('player_water_right.png'); }
+.character.water-walk-up    { background-image: url('player_water_up.png'); } /* player_water_up_move.gif */
+.character.water-walk-down  { background-image: url('player_water_down.png'); } /* player_water_down_move.gif */
+.character.water-walk-left  { background-image: url('player_water_left.png'); } /* player_water_left_move.gif */
+.character.water-walk-right { background-image: url('player_water_right.png'); } /* player_water_right_move.gif */
+.character.axe-up    { background-image: url('player_axel_up.jpeg.png'); }
+.character.axe-down  { background-image: url('player_axel_down.jpeg.png'); }
+.character.axe-left  { background-image: url('player_axel_left.jpeg.png'); }
+.character.axe-right { background-image: url('player_axel_right.jpeg.png'); }
+.character.axe-up, .character.axe-down, .character.axe-left, .character.axe-right {
+  width: 60px;
+  height: 60px;
+  margin-top: -10px;
+}
 .character-name {
   position: absolute;
   bottom: 50px;
@@ -159,6 +176,7 @@ body {
 .obstacle.cacto             { background-image: url('cacto.jpeg.png'); }
 .obstacle.rock              { background-image: url('rock.jpeg.png'); }
 .obstacle.poppy             { background-image: url('poppys.jpeg.png'); }
+.obstacle.pedrinhas         { background-image: url('pedrinhas.jpeg.png'); }
 .obstacle.plank             { background-image: url('plank.jpeg.png'); }
 .obstacle.fogueira          { background-image: url('campfire.jpeg.gif'); }
 .obstacle.bigorna           { background-image: url('bigorna.jpeg.png'); }
@@ -171,8 +189,9 @@ body {
 .obstacle.fornalha          { background-image: url('fornalha.jpeg.png'); }
 .obstacle.bancada           { background-image: url('bancada.jpeg.png'); }
 /* ==== [ ENTITYS ] ==== */
-.enemy                { background-size: cover; z-index: 999; }
+.enemy                { background-size: cover; z-index: 1099; }
 .enemy.vaca           { background-image: url('cow.jpeg.gif'); }
+.enemy.bagre          { background-image: url('bagre.jpeg.gif'); }
 .enemy.esqueleto      { background-image: url('esqueleto.jpeg.png'); }
 .enemy.touro          { background-image: url('touro.jpeg.png'); }
 .enemy.cavalo         { background-image: url('cavalo.jpeg.png'); }
@@ -191,6 +210,7 @@ body {
 .enemy.dragaoanciao   { background-image: url('dragaoanciao.jpeg.png'); }
 .enemy.vermilson      { background-image: url('vermilson.jpeg.gif'); }
 .enemy.urso           { background-image: url('urso.jpeg.gif'); }
+.enemy.wendigo        { background-image: url('wendigo.jpeg.png'); }
 .enemy.peru           { background-image: url('peru.jpeg.gif'); }
 .enemy.tanquedeguerra { background-image: url('tanquedeguerra.jpeg.gif'); }
 .enemy.lobisomem, .enemy.grifo, .enemy.urso, .enemy.enemy.crocodilo, .obstacle.largetree {
@@ -198,7 +218,7 @@ body {
   height: 60px;
   transform: translate(-30px, -40px);
 }
-.enemy.hydra, .enemy.generallagosta, .enemy.tanquedeguerra, .enemy.dragaoselvagem, .enemy.dragaoanciao, .enemy.vermilson, .enemy.boss, .enemy.golem {
+.enemy.hydra, .enemy.generallagosta, .enemy.tanquedeguerra, .enemy.wendigo, .enemy.dragaoselvagem, .enemy.dragaoanciao, .enemy.vermilson, .enemy.boss, .enemy.golem {
   width: 108px;
   height: 108px;
   transform: translate(-54px, -88px);
@@ -212,11 +232,13 @@ body {
 .enemy.dragaoanciao .enemy-hp,
 .enemy.golem .enemy-hp,
 .enemy.tanquedeguerra .enemy-hp,
+.enemy.wendigo .enemy-hp, 
 .enemy.vermilson .enemy-hp {
   bottom: 110px; /* sobe a barra */
 }
 .enemy.grifo .enemy-hp,
 .enemy.crocodilo .enemy-hp,
+.enemy.urso .enemy-hp,
 .enemy.lobisomem .enemy-hp {
   bottom: 60px;
 }
@@ -876,10 +898,12 @@ body, .map, .chat, #chat-box {
     <button onclick="createEnemy(gridX, gridY, 'porco')">🐷</button>
     <button onclick="createEnemy(gridX, gridY, 'slime')">🟢</button>
     <button onclick="createEnemy(gridX, gridY, 'vaca')">🐄</button>
+    <button onclick="createEnemy(gridX, gridY, 'bagre')">🐟</button>
     <button onclick="createEnemy(gridX, gridY, 'vermilson')">🪱</button>
     <button onclick="createEnemy(gridX, gridY, 'tanquedeguerra')">👨‍⚕️</button>
     <button onclick="createEnemy(gridX, gridY, 'touro')">🐂</button>
     <button onclick="createEnemy(gridX, gridY, 'urso')">🐻</button>
+    <button onclick="createEnemy(gridX, gridY, 'wendigo')">🧟</button>
     <button onclick="createEnemy(gridX, gridY, 'zumbi')">🧟</button>
   </div>
   <div class="editor-section">
@@ -932,6 +956,7 @@ body, .map, .chat, #chat-box {
     <button onclick="placeNature('cacto')">🌵</button>
     <button onclick="placeNature('rock')">🪨</button>
     <button onclick="placeNature('poppy')">🌺</button> 
+    <button onclick="placeNature('pedrinhas')">🪨</button>
   </div>
   <div class="editor-section"> </div>
   <div class="editor-section"> </div>
@@ -943,27 +968,57 @@ body, .map, .chat, #chat-box {
 function setCharacterDirection(dx, dy, isMoving) {
   character.classList.remove(
     "up", "down", "left", "right",
-    "walk-up", "walk-down", "walk-left", "walk-right"
+    "walk-up", "walk-down", "walk-left", "walk-right",
+    "water-up", "water-down", "water-left", "water-right",
+    "water-walk-up", "water-walk-down", "water-walk-left", "water-walk-right",
+    "axe-up", "axe-down", "axe-left", "axe-right"
   );
   let dir = lastDirection;
-  // ✅ Só calcula direção nova se estiver realmente se movendo
   if (dx !== 0 || dy !== 0) {
     if (Math.abs(dx) > Math.abs(dy)) {
       dir = dx > 0 ? "right" : "left";
     } else {
       dir = dy > 0 ? "down" : "up";
     }
-    lastDirection = dir; // ✅ salva a direção real
+    lastDirection = dir;
   }
-  if (isMoving) {
-    character.classList.add("walk-" + dir); // GIF
+  const key = `${gridX}-${gridY}`;
+  const terrain = terrainMap[key];
+  if (terrain === "water" || terrain === "deepwater") {
+    // Sprites aquáticos
+    if (isMoving) {
+      character.classList.add("water-walk-" + dir);
+    } else {
+      character.classList.add("water-" + dir);
+    }
   } else {
-    character.classList.add(dir); // PNG parado
+    if (isMoving) {
+      character.classList.add("walk-" + dir);
+    } else {
+      if (playerDamage > 1) {
+        character.classList.add("axe-" + dir);
+      } else {
+        character.classList.add(dir);
+      }
+    }
   }
 }
   let mainHand = "right"; // padrão
 function setMainHand(hand) {
   mainHand = hand;
+}
+function equipAxe() {
+  playerDamage = 3; // triplica o dano
+  updateCharacterVisualWithAxe(); // troca sprites para machado
+}
+function updateCharacterVisualWithAxe() {
+  character.classList.remove("up","down","left","right");
+  character.classList.add("axe-" + lastDirection);
+}
+function unequipAxe() {
+  playerDamage = 1; // volta ao padrão
+  character.classList.remove("axe-up","axe-down","axe-left","axe-right");
+  character.classList.add(lastDirection);
 }
 function performAttack() {
   if (lastHighlightedObstacle) {
@@ -1004,7 +1059,6 @@ function performAttack() {
     setTimeout(() => (canAttackWithSpace = true), 1000);
   }
 }
-
 function placeObstacle(type) {
   const id = `obstacle-${type}-${gridX}-${gridY}`;
   if (document.getElementById(id)) return;
@@ -1083,6 +1137,21 @@ function createObstacle(type = "plank") {
   obstacle.onclick = () => incrementObstacleClicks(id);
   const activeMap = onSecond ? mapContentSecond : mapContent;
   activeMap.appendChild(obstacle);
+}
+function updateCharacterSpritesForTerrain() {
+  const key = `${gridX}-${gridY}`;
+  const terrain = terrainMap[key];
+  character.classList.remove(
+    "up", "down", "left", "right",
+    "walk-up", "walk-down", "walk-left", "walk-right",
+    "water-up", "water-down", "water-left", "water-right",
+    "water-walk-up", "water-walk-down", "water-walk-left", "water-walk-right",
+  );
+  if (terrain === "water" || terrain === "deepwater") {
+    character.classList.add("water-" + lastDirection);
+  } else {
+    character.classList.add(lastDirection);
+  }
 }
 function incrementObstacleClicks(id) {
   const el = document.getElementById(id);
@@ -1438,7 +1507,15 @@ function craftPickaxe() {
   },
   madeira:  { title: "Madeira coletada" },
   pedra:    { title: "Pedra coletada" },
-  machado:  { title: "Machado equipado", },
+  machado:  { title: "Clique para equipar/desequipar",
+  use: (i) => {
+    if (playerDamage === 1) {
+      equipAxe();
+    } else {
+      unequipAxe();
+    }
+  }
+},
   tabua:    { title: "Clique no mapa para construir", select: true },
   pá:       { title: "Clique no mapa para escavar", select: true },
   lagosta:  { title: "Lagosta misteriosa" },
@@ -2233,8 +2310,15 @@ function stopFollowing() {
 }
 function createEnemy(x, y, type = "zumbi") {
   const terrain = terrainMap[`${x}-${y}`];
-  const invalid = type === "lagosta" ? terrain !== "deepwater" : ["water", "deepwater"].includes(terrain);
-  if (invalid || hasObstacle(x, y)) return;
+  let invalid;
+  if (type === "lagosta") {
+    invalid = terrain !== "deepwater";
+  } else if (type === "bagre") {
+    invalid = terrain !== "water";
+  } else {
+    invalid = ["water", "deepwater"].includes(terrain);
+  }
+  if (!adminMode && (invalid || hasObstacle(x, y))) return;
   const id = `enemy${++enemyCount}`;
   const enemy = document.createElement("div");
   enemy.className = `enemy ${type}`;
@@ -2248,6 +2332,7 @@ function createEnemy(x, y, type = "zumbi") {
   (type === "lagosta" ? mapContentSecond : mapContent).appendChild(enemy);
   const typeImages = {
     zumbi: "zumbi.jpeg.gif",
+    bagre: "bagre.jpeg.gif",
     dragaoselvagem: "dragaoselvagem.jpeg.png",
     dragaoanciao: "dragaoanciao.jpeg.png",
     lobisomem: "lobisomem.jpeg.png",
@@ -2266,6 +2351,7 @@ function createEnemy(x, y, type = "zumbi") {
     vaca: "cow.jpeg.gif",
     vermilson: "vermilson.jpeg.gif",
     touro: "touro.jpeg.png",
+    wendigo: "wendigo.jpeg.png",
     cavalo: "cavalo.jpeg.png"
   };
   const imagePath = typeImages[type] || "slime.jpeg.png";
@@ -2280,7 +2366,8 @@ function createEnemy(x, y, type = "zumbi") {
     element: enemy,
     hpFill,
     type,
-    behavior: type === "vaca" ? "passive" : ["lobisomem","tanquedeguerra","dragaoanciao","peru","urso","grifo","esqueleto","dragaoselvagem","generallagosta","hydra","vermilson","porco","slime","golem","crocodilo","cavalo","touro"].includes(type) ? type : "normal",
+    behavior: type === "vaca" ? "passive" :
+      ["lobisomem","bagre","wendigo","tanquedeguerra","dragaoanciao","peru","urso","grifo","esqueleto","dragaoselvagem","generallagosta","hydra","vermilson","porco","slime","golem","crocodilo","cavalo","touro"].includes(type) ? type : "normal",
     islobisomem: type === "lobisomem"
   };
   updateEnemyPosition(id);
@@ -2475,12 +2562,6 @@ function startMovement(path) {
   targetPixelY = gridY * cellSize;
   animationFrameId = requestAnimationFrame(animateSmoothMovement);
 }
-  const expandedDirections = {
-  left: false,
-  right: false,
-  top: false,
-  bottom: false
-};
 function checkEnterSecondFloor() {
   const key = `${gridX}-${gridY}`;
   const terrain = terrainMap[key];
@@ -2699,7 +2780,13 @@ function getRandomTargetAround(entity) {
 }
 function isTerrainAvoidedFor(entity, x, y) {
   const terrain = terrainMap[`${x}-${y}`];
-  return entity.type === "lagosta" ? terrain !== "deepwater" : ["water", "deepwater"].includes(terrain);
+  if (entity.type === "lagosta") {
+    return terrain !== "deepwater";
+  }
+  if (entity.type === "bagre") {
+    return !(terrain === "water" || terrain === "deepwater");
+  }
+  return ["water", "deepwater"].includes(terrain);
 }
 function findMobPath(entity, startX, startY, targetX, targetY) {
   const queue = [{ x: startX, y: startY, path: [] }];
@@ -2776,8 +2863,6 @@ function animateSmoothMovement() {
       isMoving = false;
       setCharacterDirection(0, 0, false);
       animationFrameId = null;
-      checkAndExpandMapIfAtEdge();
-      return;
     }
     const next = pathQueue.shift();
     gridX = next.x;
@@ -2793,33 +2878,26 @@ function animateSmoothMovement() {
   }
   animationFrameId = requestAnimationFrame(animateSmoothMovement);
 }
-// Raio de detecção e ataque
-const ENEMY_AGGRO_RADIUS = 4;   // distância em tiles para começar a perseguir
+const ENEMY_AGGRO_RADIUS = 6;   // distância em tiles para começar a perseguir
 const ENEMY_ATTACK_RADIUS = 1;  // distância mínima para causar dano
-const ENEMY_DAMAGE = 1;         // dano base
+const ENEMY_DAMAGE = 2;         // dano base por ataque
 function animateMob(entity) {
-  // Se inimigo for agressivo
   if (["lobisomem", "esqueleto", "zumbi"].includes(entity.type)) {
     const dist = Math.abs(gridX - entity.x) + Math.abs(gridY - entity.y);
-
-    // Se jogador está dentro do raio de perseguição
     if (dist <= ENEMY_AGGRO_RADIUS) {
       const path = findMobPath(entity, entity.x, entity.y, gridX, gridY);
       if (path.length) {
         entity.pathQueue = path;
         entity.moving = true;
+        startMobStep(entity); // inicia perseguição
       }
     }
-
-    // Se jogador está muito perto, causar dano
     if (dist <= ENEMY_ATTACK_RADIUS) {
       hp -= ENEMY_DAMAGE;
       updateHUD();
       if (hp <= 0) showRespawnScreen();
     }
   }
-
-  // Movimento normal do mob (já existente)
   if (entity.waitUntil && performance.now() < entity.waitUntil) return;
   if (!entity.moving) {
     planMobPath(entity);
@@ -2894,8 +2972,9 @@ function autoSpawn() {
   };
   const randomPick = arr => arr[Math.floor(Math.random() * arr.length)];
   const dayEntities = ["vaca", "peru", "touro","slime","urso","cavalo"];
-  const nightEntities = ["zumbi","lobisomem","esqueleto"]; // pode expandir futuramente
+  const nightEntities = ["zumbi","lobisomem","esqueleto"];
   spawn("lastLagosta", 10000, t => t === "deepwater", () => "lagosta");
+  spawn("lastBagre", 12000, t => t === "water", () => "bagre");
   spawn(
     "lastCreature",
     5000,
@@ -2941,7 +3020,7 @@ function generateTerrainGrid(cols = 64, rows = 64, seed = Date.now()) {
   mapCols = cols;
   mapRows = rows;
   const rng = createSeededRNG(seed);
-  const terrainMap = {}, treeMap = {}, rockMap = {}, poppyMap = {}, caveMap = {}, largetreeMap = {}, cactusMap = {};
+  const terrainMap = {}, treeMap = {}, rockMap = {}, poppyMap = {}, caveMap = {}, largetreeMap = {}, cactusMap = {}, pebbleMap = {};
   const caveEntrances = [];
   const total = cols * rows;
   const targets = {
@@ -2950,8 +3029,9 @@ function generateTerrainGrid(cols = 64, rows = 64, seed = Date.now()) {
     rock: Math.floor(total * 0.02),
     poppy: Math.floor(total * 0.02),
     cave: Math.floor(total * 0.01),
-    largetree: Math.floor(total * 0.03),
-    cactus: Math.floor(total * 0.05)
+    largetree: Math.floor(total * 0.05),
+    cactus: Math.floor(total * 0.03),
+    pebble: Math.floor(total * 0.30)
   };
   const r = rng();
   let terrainType = "default";
@@ -3066,12 +3146,38 @@ function generateTerrainGrid(cols = 64, rows = 64, seed = Date.now()) {
   if (terrainType === "desert") {
     generateNature(targets.cactus, cactusMap, ["water", "deepwater"], 0.7, 0.1);
   }
+  generateNature(
+    targets.pebble,
+    pebbleMap,
+    ["water", "deepwater", "sand", "cactus","caverna", "rock", "largetree", "tree", "poppy"],
+    0.55,   // chance base moderada para espalhar sem formar clusters grandes
+    0.08,   // decaimento suave para boa distribuição
+    { ...rockMap }, // evita ficar colado em rochas grandes
+    true    // espaçamento estrito entre pedrinhas
+  );
   for (let x = 0; x < mapCols; x++) {
     for (let y = 0; y < mapRows; y++) {
       const key = `${x}-${y}`;
       if (caveMap[key]) {
         terrainMap[key] = "caverna";
         caveEntrances.push({ x, y });
+      }
+    }
+  }
+  if (["default", "island"].includes(terrainType)) {
+    const pathCount = Math.floor(cols / 4);
+    for (let p = 0; p < pathCount; p++) {
+      let [px, py] = [Math.floor(rng() * cols), Math.floor(rng() * rows)];
+      const length = Math.floor(rows / 2 + rng() * rows / 2);
+      for (let l = 0; l < length; l++) {
+        const key = `${px}-${py}`;
+        if (isValid(px, py) && terrainMap[key] && terrainMap[key] !== "water" && terrainMap[key] !== "deepwater") {
+          terrainMap[key] = "dirt";
+        }
+        const dir = [[1,0],[-1,0],[0,1],[0,-1]][Math.floor(rng() * 4)];
+        px += dir[0];
+        py += dir[1];
+        if (!isValid(px, py)) break;
       }
     }
   }
@@ -3088,7 +3194,8 @@ function generateTerrainGrid(cols = 64, rows = 64, seed = Date.now()) {
       if (rockMap[key]) placeNature("rock");
       if (poppyMap[key]) placeNature("poppy");
       if (largetreeMap[key]) placeNature("largetree");
-      if (cactusMap[key]) placeNature("cacto"); // novo para deserto
+      if (cactusMap[key]) placeNature("cacto");
+      if (pebbleMap[key]) placeNature("pedrinhas"); // mapeie para seu asset "pedrinhas.jpeg"
       [gridX, gridY] = [ox, oy];
     }
   }
