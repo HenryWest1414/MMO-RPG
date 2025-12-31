@@ -173,6 +173,8 @@ body {
 .obstacle                   { background-image: url('obstacle.jpeg.png'); position: absolute; background-size: contain; }
 .obstacle.tree              { background-image: url('arvore.jpeg.png'); z-index: 100; }
 .obstacle.largetree         { background-image: url('largetree.jpeg.png'); z-index: 1001; }
+.obstacle.pilar             { background-image: url('pilar.jpeg.png'); z-index: 1001; }
+.obstacle.tronco            { background-image: url('tronco.jpeg.png'); }
 .obstacle.cacto             { background-image: url('cacto.jpeg.png'); }
 .obstacle.rock              { background-image: url('rock.jpeg.png'); }
 .obstacle.poppy             { background-image: url('poppys.jpeg.png'); }
@@ -213,7 +215,7 @@ body {
 .enemy.wendigo        { background-image: url('wendigo.jpeg.png'); }
 .enemy.peru           { background-image: url('peru.jpeg.gif'); }
 .enemy.tanquedeguerra { background-image: url('tanquedeguerra.jpeg.gif'); }
-.enemy.lobisomem, .enemy.grifo, .enemy.urso, .enemy.enemy.crocodilo, .obstacle.largetree {
+.enemy.lobisomem, .enemy.grifo, .enemy.urso, .enemy.enemy.crocodilo, .obstacle.largetree, .obstacle.pilar {
   width: 60px;
   height: 60px;
   transform: translate(-30px, -40px);
@@ -927,6 +929,7 @@ body, .map, .chat, #chat-box {
     <button onclick="placeBigornaObstacle()">⚒️ Bigorna</button>
     <button onclick="placeJarroObstacle()">⚱️ Jarro</button>
     <button onclick="placeEstandeDeLivrosObstacle()">📚 Estande de Livros</button>
+    <button onclick="placePilarObstacle()">🪵 Pilar</button>
     <button onclick="placeCaldeiraoObstacle()">⚗️ Caldeirão</button>
     <button onclick="placePortaObstacle()">🚪 Porta</button>
     <button onclick="placeBauObstacle()">🪵 Bau</button>
@@ -954,6 +957,7 @@ body, .map, .chat, #chat-box {
     <button onclick="placeNature('tree')">🌲</button>
     <button onclick="placeNature('largetree')">🌳</button>
     <button onclick="placeNature('cacto')">🌵</button>
+    <button onclick="placeNature('tronco')">🪵</button>
     <button onclick="placeNature('rock')">🪨</button>
     <button onclick="placeNature('poppy')">🌺</button> 
     <button onclick="placeNature('pedrinhas')">🪨</button>
@@ -1081,6 +1085,7 @@ function placeBigornaObstacle()         { placeObstacle("bigorna"); }
 function placeBauObstacle()             { placeObstacle("bau"); }
 function placeBannerObstacle()          { placeObstacle("banner"); }
 function placeFornalhaObstacle()        { placeObstacle("fornalha"); }
+function placePilarObstacle()           { placeObstacle("pilar"); }
 function makeBancadaInteractive(id) {
   const el = document.getElementById(id);
   if (!el) return;
@@ -2154,8 +2159,8 @@ function incrementNatureClicks(el) {
   }
 }
 const OBSTACLE_TYPES = [
-  "tree", "largetree", "cacto", "rock", "plank",
-  "campfire", "bigorna", "jarro", "estande_de_livros",
+  "tree", "largetree", "cacto", "rock", "plank", "tronco",
+  "campfire", "bigorna", "pilar", "jarro", "estande_de_livros",
   "caldeirao", "porta", "bau", "banner", "fornalha", "bancada"
 ];
 function checkObstacle(x, y, onSecond = false, genericCheck = false) {
@@ -2173,7 +2178,7 @@ function isBlocked(x, y) {
 }
 function hasObstacle(x, y) {
   const key = `${x}-${y}`;
-  const checkTypes = ["tree", "largetree", "cacto", "rock", "plank"];
+  const checkTypes = ["tree", "largetree", "pilar", "cacto", "rock", "plank", "tronco",];
   for (const type of checkTypes) {
     if (document.getElementById(`obstacle-${type}-${key}`)) return true;
   }
@@ -3020,7 +3025,7 @@ function generateTerrainGrid(cols = 32, rows = 32, seed = Date.now()) {
   mapCols = cols;
   mapRows = rows;
   const rng = createSeededRNG(seed);
-  const terrainMap = {}, treeMap = {}, rockMap = {}, poppyMap = {}, caveMap = {}, largetreeMap = {}, cactusMap = {}, pebbleMap = {};
+  const terrainMap = {}, treeMap = {}, rockMap = {}, poppyMap = {}, caveMap = {}, largetreeMap = {}, cactusMap = {}, troncoMap = {}, pebbleMap = {}, pilarMap = {}, bauMap = {};
   const caveEntrances = [];
   const total = cols * rows;
   const targets = {
@@ -3031,21 +3036,27 @@ function generateTerrainGrid(cols = 32, rows = 32, seed = Date.now()) {
     cave: Math.floor(total * 0.01),
     largetree: Math.floor(total * 0.05),
     cactus: Math.floor(total * 0.03),
-    pebble: Math.floor(total * 0.30)
+    pebble: Math.floor(total * 0.30),
+    tronco: Math.floor(total * 0.05)
   };
   const r = rng();
   let terrainType = "default";
   if (r < 0.2) terrainType = "snow";
   else if (r < 0.35) terrainType = "desert";
   else if (r < 0.5) terrainType = "island";
+
   const isValid = (x, y) => x >= 0 && x < cols && y >= 0 && y < rows;
   const neighbors = (x, y) => [-1, 0, 1].flatMap(dx =>
     [-1, 0, 1].filter(dy => dx || dy).map(dy => [x + dx, y + dy])
   );
+
+  // terreno base
   for (let x = 0; x < cols; x++)
     for (let y = 0; y < rows; y++)
       terrainMap[`${x}-${y}`] = terrainType === "desert" ? "sand" :
                                 terrainType === "snow" ? "snow" : "grass";
+
+  // bioma ilha
   if (terrainType === "island") {
     const [cx, cy] = [Math.floor(cols / 2), Math.floor(rows / 2)];
     const radius = Math.floor(Math.min(cols, rows) / 3);
@@ -3057,6 +3068,51 @@ function generateTerrainGrid(cols = 32, rows = 32, seed = Date.now()) {
       }
     }
   }
+
+  // Estrutura especial
+  function generateSpecialStructureRandom() {
+    const margin = 5;
+    const cornerX = rng() < 0.5 ? margin : mapCols - margin - 5;
+    const cornerY = rng() < 0.5 ? margin : mapRows - margin - 5;
+
+    const pillarOffsets = [
+      [-2, -1], [-2, 1], [2, -1], [2, 1],
+      [-1, -2], [1, -2], [-1, 2], [1, 2]
+    ];
+
+    // piso central
+    for (let dx = -2; dx <= 2; dx++) {
+      for (let dy = -2; dy <= 2; dy++) {
+        const x = cornerX + dx;
+        const y = cornerY + dy;
+        const key = `${x}-${y}`;
+        if (isValid(x, y)) {
+          terrainMap[key] = "smoothstone";
+          pebbleMap[key] = true;
+        }
+      }
+    }
+
+    // pilares
+    for (const [dx, dy] of pillarOffsets) {
+      const x = cornerX + dx;
+      const y = cornerY + dy;
+      const key = `${x}-${y}`;
+      if (isValid(x, y)) {
+        terrainMap[key] = "smoothstone";
+        pilarMap[key] = true;
+      }
+    }
+
+    // baú central
+    const chestKey = `${cornerX}-${cornerY}`;
+    terrainMap[chestKey] = "smoothstone";
+    bauMap[chestKey] = true;
+  }
+
+  generateSpecialStructureRandom();
+
+  // geração de água
   const generateWater = (base) => {
     const queue = [], seeds = Math.max(1, Math.floor(targets.water / 45));
     for (let i = 0; i < seeds; i++) {
@@ -3077,6 +3133,7 @@ function generateTerrainGrid(cols = 32, rows = 32, seed = Date.now()) {
       }
     }
   };
+
   if (["default", "snow"].includes(terrainType)) {
     const base = terrainType === "snow" ? "snow" : "grass";
     generateWater(base);
@@ -3094,6 +3151,8 @@ function generateTerrainGrid(cols = 32, rows = 32, seed = Date.now()) {
         }
     }
   }
+
+  // função genérica
   const generateNature = (target, map, exclude, baseChance, decay, avoid = {}, strictSpacing = false) => {
     const queue = [];
     for (let i = 0; i < Math.max(1, Math.floor(target / 10)); i++) {
@@ -3133,28 +3192,51 @@ function generateTerrainGrid(cols = 32, rows = 32, seed = Date.now()) {
       }
     }
   };
+
+  // ajustes
   const adjustedTree = terrainType === "island" ? Math.floor(targets.tree * 0.4) :
                       terrainType === "snow" ? Math.floor(total * 0.25) : targets.tree;
   const adjustedRock = terrainType === "snow" ? Math.floor(total * 0.05) :
                       terrainType === "desert" ? Math.floor(total * 0.5) : targets.rock;
+
+  // mapa de exclusão da estrutura
+  const structureMap = { ...pilarMap, ...bauMap, ...pebbleMap };
+
   if (terrainType !== "desert")
-    generateNature(adjustedTree, treeMap, ["water", "deepwater", "sand"], 0.7, 0.1);
-  generateNature(adjustedRock, rockMap, ["water", "deepwater", "sand"], 0.6, 0.1, treeMap);
-  generateNature(targets.poppy, poppyMap, ["water", "deepwater", "sand"], 0.5, 0.1, { ...treeMap, ...rockMap });
-  generateNature(targets.largetree, largetreeMap, ["water", "deepwater", "sand"], 0.6, 0.1, { ...treeMap, ...rockMap, ...poppyMap }, true);
-  generateNature(targets.cave, caveMap, ["water", "deepwater", "sand"], 0.8, 0.15);
+    generateNature(adjustedTree, treeMap, ["water", "deepwater", "sand"], 0.7, 0.1, structureMap);
+
+  generateNature(adjustedRock, rockMap, ["water", "deepwater", "sand"], 0.6, 0.1, { ...treeMap, ...structureMap });
+  generateNature(targets.poppy, poppyMap, ["water", "deepwater", "sand"], 0.5, 0.1, { ...treeMap, ...rockMap, ...structureMap });
+  generateNature(targets.largetree, largetreeMap, ["water", "deepwater", "sand"], 0.6, 0.1, { ...treeMap, ...rockMap, ...poppyMap, ...structureMap }, true);
+  generateNature(targets.cave, caveMap, ["water", "deepwater", "sand"], 0.8, 0.15, structureMap);
+
   if (terrainType === "desert") {
-    generateNature(targets.cactus, cactusMap, ["water", "deepwater"], 0.7, 0.1);
+    generateNature(targets.cactus, cactusMap, ["water", "deepwater"], 0.7, 0.1, structureMap);
   }
+
   generateNature(
     targets.pebble,
     pebbleMap,
     ["water", "deepwater", "sand", "cactus","caverna", "rock", "largetree", "tree", "poppy"],
-    0.55,   // chance base moderada para espalhar sem formar clusters grandes
-    0.08,   // decaimento suave para boa distribuição
-    { ...rockMap }, // evita ficar colado em rochas grandes
-    true    // espaçamento estrito entre pedrinhas
+    0.55,
+    0.08,
+    { ...rockMap, ...structureMap },
+    true
   );
+
+  // troncos em pequenas unidades nos biomas default, desert e snow
+  if (["default", "desert", "snow"].includes(terrainType)) {
+    generateNature(
+      targets.tronco,
+      troncoMap,
+      ["water", "deepwater", "sand", "caverna"],
+      0.5,   // chance base moderada
+      0.15,  // decaimento rápido para clusters pequenos
+      { ...treeMap, ...rockMap, ...structureMap },
+      true   // espaçamento estrito
+    );
+  }
+
   for (let x = 0; x < mapCols; x++) {
     for (let y = 0; y < mapRows; y++) {
       const key = `${x}-${y}`;
@@ -3164,6 +3246,7 @@ function generateTerrainGrid(cols = 32, rows = 32, seed = Date.now()) {
       }
     }
   }
+
   if (["default", "island"].includes(terrainType)) {
     const pathCount = Math.floor(cols / 4);
     for (let p = 0; p < pathCount; p++) {
@@ -3181,6 +3264,8 @@ function generateTerrainGrid(cols = 32, rows = 32, seed = Date.now()) {
       }
     }
   }
+
+  // Loop final para renderizar tudo
   for (let x = 0; x < cols; x++) {
     for (let y = 0; y < rows; y++) {
       const key = `${x}-${y}`;
@@ -3195,11 +3280,56 @@ function generateTerrainGrid(cols = 32, rows = 32, seed = Date.now()) {
       if (poppyMap[key]) placeNature("poppy");
       if (largetreeMap[key]) placeNature("largetree");
       if (cactusMap[key]) placeNature("cacto");
-      if (pebbleMap[key]) placeNature("pedrinhas"); // mapeie para seu asset "pedrinhas.jpeg"
+      if (pebbleMap[key]) placeNature("pedrinhas"); // asset "pedrinhas.jpeg"
+      if (troncoMap[key]) placeNature("tronco");    // troncos pequenos
+      if (pilarMap[key]) placeNature("pilar");      // asset "pilar.jpeg"
+      if (bauMap[key]) placeNature("bau");          // asset "bau.jpeg"
       [gridX, gridY] = [ox, oy];
     }
   }
 }
+
+function generateSpecialStructureRandom() {
+  const margin = 5;
+  // escolhe canto aleatório
+  const cornerX = rng() < 0.5 ? margin : mapCols - margin - 5;
+  const cornerY = rng() < 0.5 ? margin : mapRows - margin - 5;
+
+  const pillarOffsets = [
+    [-2, -1], [-2, 1], [2, -1], [2, 1],
+    [-1, -2], [1, -2], [-1, 2], [1, 2]
+  ];
+
+  // piso central + pedrinhas
+  for (let dx = -2; dx <= 2; dx++) {
+    for (let dy = -2; dy <= 2; dy++) {
+      const x = cornerX + dx;
+      const y = cornerY + dy;
+      const key = `${x}-${y}`;
+      if (x >= 0 && y >= 0 && x < mapCols && y < mapRows) {
+        terrainMap[key] = "smoothstone";
+        pebbleMap[key] = true;
+      }
+    }
+  }
+
+  // pilares
+  for (const [dx, dy] of pillarOffsets) {
+    const x = cornerX + dx;
+    const y = cornerY + dy;
+    const key = `${x}-${y}`;
+    if (x >= 0 && y >= 0 && x < mapCols && y < mapRows) {
+      terrainMap[key] = "smoothstone";
+      pilarMap[key] = true;
+    }
+  }
+
+  // baú central
+  const chestKey = `${cornerX}-${cornerY}`;
+  terrainMap[chestKey] = "smoothstone";
+  bauMap[chestKey] = true;
+}
+
 function generateSecondFloor() {
   const MIN_DIST = 3;     
   const CLUSTER_RATIO = 0.20; 
