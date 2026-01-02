@@ -312,9 +312,9 @@ background-color: #666;
   padding-top: 10px;
 }
 #potion-button,
-#canteen-button {
+#canteen-button,
+#attack-button {
   position: fixed;
-  bottom: 20px;
   background-color: #333;
   color: white;
   border: 2px solid #555;
@@ -326,10 +326,23 @@ background-color: #666;
   transition: background-color 0.2s ease;
   opacity: 0.7;
 }
-#potion-button  { left: 80px; }
-#canteen-button { left: 200px; }
+#potion-button  { 
+  bottom: 20px; 
+  left: 80px; 
+}
+#canteen-button { 
+  bottom: 70px; 
+  left: 80px; 
+}
+#attack-button { 
+  bottom: 120px; 
+  left: 80px; 
+}
 #potion-button:hover,
-#canteen-button:hover { background-color: #555; }
+#canteen-button:hover,
+#attack-button:hover { 
+  background-color: #555; 
+}
 #fixed-status-bars {
   position: fixed;
   top: 10px;
@@ -460,22 +473,23 @@ body, .map, .chat, #chat-box {
   right: 20px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;       /* aumenta o espaço entre os botões */
   z-index: 1000;
 }
 #hand-buttons button {
   background-color: #333;
   color: white;
   border: 2px solid #555;
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 14px;
+  padding: 16px 20px;   /* aumenta a área clicável */
+  border-radius: 10px;  /* bordas mais arredondadas */
+  font-size: 28px;      /* aumenta o tamanho dos emojis 🖐️ 🤚 */
   cursor: pointer;
-  transition: background-color 0.2s ease;
-  opacity: 0.8;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  opacity: 0.9;
 }
 #hand-buttons button:hover {
   background-color: #555;
+  transform: scale(1.1); /* efeito de zoom ao passar o mouse */
 }
 #missions-screen {
   position: fixed;
@@ -583,24 +597,6 @@ body, .map, .chat, #chat-box {
 }
 .close-btn:hover {
   background: #444;
-}
-#attack-button {
-  position: fixed;
-  bottom: 80px;   /* fica acima do botão de cura */
-  left: 80px;     /* mesma posição horizontal do botão de cura */
-  background-color: #333;
-  color: white;
-  border: 2px solid #555;
-  padding: 10px 14px;
-  border-radius: 8px;
-  font-size: 16px;
-  cursor: pointer;
-  z-index: 1000;
-  transition: background-color 0.2s ease;
-  opacity: 0.7;
-}
-#attack-button:hover {
-  background-color: #555;
 }
 </style>
 </head>
@@ -3428,3 +3424,4 @@ function placeSmooth(x, y) {
 </script>
 </body>
 </html>
+
