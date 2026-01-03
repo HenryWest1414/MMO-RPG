@@ -192,14 +192,26 @@ body {
 .obstacle.bancada           { background-image: url('bancada.jpeg.png'); }
 /* ==== [ ENTITYS ] ==== */
 .enemy                { background-size: cover; z-index: 1099; }
-.enemy.vaca           { background-image: url('cow.jpeg.gif'); }
+
+.enemy.vaca            { background-size: cover; z-index: 1100; }
+.enemy.vaca.up    { background-image: url('cow_up.jpeg.gif'); }
+.enemy.vaca.down  { background-image: url('cow_down.jpeg.gif'); }
+.enemy.vaca.left  { background-image: url('cow_left.jpeg.gif'); }
+.enemy.vaca.right { background-image: url('cow_right.jpeg.gif'); }
+
 .enemy.bagre          { background-image: url('bagre.jpeg.gif'); }
 .enemy.esqueleto      { background-image: url('esqueleto.jpeg.png'); }
 .enemy.touro          { background-image: url('touro.jpeg.png'); }
 .enemy.cavalo         { background-image: url('cavalo.jpeg.png'); }
 .enemy.lagosta        { background-image: url('lagosta.jpeg.gif'); }
 .enemy.zumbi          { background-image: url('zumbi.jpeg.gif'); }
-.enemy.lobisomem      { background-image: url('lobisomem.jpeg.png'); }
+
+.enemy.lobisomem        { background-size: cover; z-index: 1100; }
+.enemy.lobisomem.up     { background-image: url('lobisomem_down.jpeg.gif'); }
+.enemy.lobisomem.down   { background-image: url('lobisomem_down.jpeg.gif'); }
+.enemy.lobisomem.left   { background-image: url('lobisomem_left.jpeg.gif'); }
+.enemy.lobisomem.right  { background-image: url('lobisomem_right.jpeg.gif'); }
+
 .enemy.grifo          { background-image: url('grifo.jpeg.png'); }
 .enemy.crocodilo      { background-image: url('crocodilo.jpeg.png'); }
 .enemy.hydra          { background-image: url('hydra.jpeg.png'); }
@@ -411,6 +423,15 @@ background-color: #666;
 body, .map, .chat, #chat-box {
   scrollbar-width: none;     /* Firefox */
   -ms-overflow-style: none;  /* Internet Explorer */
+}
+* {
+  user-select: none;
+  -webkit-user-select: none; /* Safari */
+  -moz-user-select: none;    /* Firefox */
+  -ms-user-select: none;     /* Internet Explorer/Edge */
+}
+*::-webkit-scrollbar {
+  display: none; /* Chrome, Safari e Opera */
 }
 .slot.selected {
   border: 2px solid limegreen;
@@ -1384,8 +1405,8 @@ settingsButton.onclick = () => {
    ? "url('backpack_close.jpeg.png')"
     : "url('backpack_open.jpeg.png')";
 };
-  let mapCols = 32;
-  let mapRows = 32;
+  let mapCols = 64;
+  let mapRows = 64;
   let selectedItemIndex = null;
   const backpackItems = []; // Armazena os itens coletados
 function eatFruit() {
@@ -1652,6 +1673,7 @@ function updateHUD() {
   document.getElementById("hunger-bar").style.width = `${hunger}%`;
   document.getElementById("thirst-bar").style.width = `${thirst}%`;
   document.getElementById("characterNameDisplay").textContent = `${playerName} Lv.${level}`;
+  document.addEventListener("contextmenu", e => e.preventDefault());
 }
 let currentWeather = "clear";
 let rainTimeout = null;
@@ -1758,12 +1780,15 @@ function placeCampfireObstacle() {
   if (!campfirePositions.some(pos => pos.x === gridX && pos.y === gridY)) {
     campfirePositions.push({ x: gridX, y: gridY });
   }
+  // use shared constants so enemy aggro radius can mirror campfire light radius
+  const CAMPFIRE_LIGHT_INTENSITY = 3.5;
+  const CAMPFIRE_LIGHT_RADIUS = 7;
   if (hasDescendedByCave) {
-    propagateLightSecond(gridX, gridY, 3.5, 7);
+    propagateLightSecond(gridX, gridY, CAMPFIRE_LIGHT_INTENSITY, CAMPFIRE_LIGHT_RADIUS);
     updateGlobalLightSecond();
     updateTileLightingSecond();
   } else {
-    propagateLightAt(gridX, gridY, 3.5, 7);
+    propagateLightAt(gridX, gridY, CAMPFIRE_LIGHT_INTENSITY, CAMPFIRE_LIGHT_RADIUS);
   }
 }
 let isDaySecond = false;
@@ -2759,6 +2784,8 @@ const MOB_TARGET_RADIUS_MAX = 15;
 const DIRECTIONS = [
   [1, 0], [-1, 0], [0, 1], [0, -1]
 ];
+const CAMPFIRE_LIGHT_RADIUS = 7;
+const CAMPFIRE_LIGHT_INTENSITY = 3.5;
 function randomBetween(min, max) {
   return min + Math.floor(Math.random() * (max - min + 1));
 }
@@ -2879,27 +2906,88 @@ function animateSmoothMovement() {
   }
   animationFrameId = requestAnimationFrame(animateSmoothMovement);
 }
-const ENEMY_AGGRO_RADIUS = 6;   // distância em tiles para começar a perseguir
+const ENEMY_AGGRO_RADIUS = CAMPFIRE_LIGHT_RADIUS;   // distância em tiles para começar a perseguir (espelha fogueira)
 const ENEMY_ATTACK_RADIUS = 1;  // distância mínima para causar dano
 const ENEMY_DAMAGE = 2;         // dano base por ataque
+function setMobDirection(entity, dx, dy) {
+  // Aplica apenas para entidades com sprites direcionais definidos
+  if (entity.type !== "vaca" && entity.type !== "lobisomem") return;
+
+  // Determina direção dominante
+  let dir;
+  if (Math.abs(dx) > Math.abs(dy)) {
+    dir = dx > 0 ? "right" : "left";
+  } else {
+    dir = dy > 0 ? "down" : "up";
+  }
+
+  // Evita trocas redundantes
+  if (entity.lastDir === dir) return;
+  entity.lastDir = dir;
+  // Sprites por tipo
+  const spriteMap = {
+    vaca: {
+      up: "cow_up.jpeg.gif",
+      down: "cow_down.jpeg.gif",
+      left: "cow_left.jpeg.gif",
+      right: "cow_right.jpeg.gif"
+    },
+    lobisomem: {
+      up: "lobisomem_down.jpeg.gif",
+      down: "lobisomem_down.jpeg.gif",
+      left: "lobisomem_left.jpeg.gif",
+      right: "lobisomem_right.jpeg.gif"
+    }
+  };
+  const selectedSprites = spriteMap[entity.type];
+  entity.element.style.backgroundImage = `url('${selectedSprites[dir]}')`;
+  entity.element.style.backgroundSize = "cover";
+  entity.element.style.backgroundRepeat = "no-repeat";
+}
 function animateMob(entity) {
-  if (["lobisomem", "esqueleto", "zumbi"].includes(entity.type)) {
+  const chaseTypes = ["lobisomem", "esqueleto", "zumbi", "wendigo"];
+  const now = performance.now();
+  if (chaseTypes.includes(entity.type)) {
     const dist = Math.abs(gridX - entity.x) + Math.abs(gridY - entity.y);
     if (dist <= ENEMY_AGGRO_RADIUS) {
-      const path = findMobPath(entity, entity.x, entity.y, gridX, gridY);
-      if (path.length) {
-        entity.pathQueue = path;
-        entity.moving = true;
-        startMobStep(entity); // inicia perseguição
+      if (!entity.lastPlanTime || now - entity.lastPlanTime > 400) {
+        let path = [];
+        if (dist <= 2) {
+          path = [{ x: gridX, y: gridY }];
+        } else {
+          path = findMobPath(entity, entity.x, entity.y, gridX, gridY);
+          if (!path.length) {
+            const adj = findAdjacentWalkableTarget(gridX, gridY);
+            if (adj) path = findMobPath(entity, entity.x, entity.y, adj.x, adj.y);
+          }
+        }
+        if (path.length) {
+          entity.pathQueue = path;
+          entity.moving = true;
+          entity.waitUntil = 0;
+          entity.chasing = true;
+          entity.chaseSpeed = MOB_SPEED_PIXELS_PER_FRAME * 0.50;
+          startMobStep(entity);
+        } else {
+          entity.waitUntil = now + 400; // aguarda antes de tentar de novo
+        }
+        entity.lastPlanTime = now; // marca último replanejamento
       }
+    } else {
+      entity.chasing = false;
+      entity.chaseSpeed = null;
     }
     if (dist <= ENEMY_ATTACK_RADIUS) {
-      hp -= ENEMY_DAMAGE;
-      updateHUD();
-      if (hp <= 0) showRespawnScreen();
+      if (entity.type === "lobisomem") {
+        lobisomemAttack(entity);
+      } else {
+        hp -= ENEMY_DAMAGE;
+        updateHUD();
+        if (hp <= 0) showRespawnScreen();
+      }
     }
   }
-  if (entity.waitUntil && performance.now() < entity.waitUntil) return;
+  if (entity.waitUntil && now < entity.waitUntil) return;
   if (!entity.moving) {
     planMobPath(entity);
     if (!entity.moving) return;
@@ -2909,10 +2997,15 @@ function animateMob(entity) {
     startMobStep(entity);
     return;
   }
+  if (entity.pixelX == null || entity.pixelY == null) {
+    entity.pixelX = entity.x * cellSize;
+    entity.pixelY = entity.y * cellSize;
+  }
   const dx = entity.targetPixelX - entity.pixelX;
   const dy = entity.targetPixelY - entity.pixelY;
   const distPix = Math.hypot(dx, dy);
-  const effectiveSpeed = MOB_SPEED_PIXELS_PER_FRAME / 3;
+  const speedBase = entity.chaseSpeed != null ? entity.chaseSpeed : (MOB_SPEED_PIXELS_PER_FRAME / 3);
+  const effectiveSpeed = Math.max(1, speedBase);
   if (distPix < effectiveSpeed) {
     entity.pixelX = entity.targetPixelX;
     entity.pixelY = entity.targetPixelY;
@@ -2924,6 +3017,7 @@ function animateMob(entity) {
     entity.pixelX += Math.cos(angle) * effectiveSpeed;
     entity.pixelY += Math.sin(angle) * effectiveSpeed;
   }
+  setMobDirection(entity, dx, dy);
   entity.element.style.left = `${entity.pixelX}px`;
   entity.element.style.top = `${entity.pixelY}px`;
 }
@@ -2953,13 +3047,13 @@ gridX = Math.floor(mapCols / 2);
 gridY = Math.floor(mapRows / 2);
 let currentSeed = Math.floor(Math.random() * 100000);
 document.getElementById("seed-display").textContent = currentSeed;
-generateTerrainGrid(32, 32, currentSeed); // ← Aqui é onde você coloca!
+generateTerrainGrid(64, 64, currentSeed); // ← Aqui é onde você coloca!
 generateSecondFloor();
 updatePosition();
 dayNightOverlay.style.backgroundColor = "rgba(0, 0, 0, 0.2)"; // começa com dia
 setInterval(toggleDayNight, 600000); // alterna a cada 10 minutos
 const spawnTimers = {};
-const MAX_ENTITIES = 30; // <-- AQUI você muda o limite
+const MAX_ENTITIES = 25; // <-- AQUI você muda o limite
 function autoSpawn() {
   const now = Date.now();
   if (Object.keys(enemies).length >= MAX_ENTITIES) return;
@@ -3017,7 +3111,7 @@ function digTileWithPickaxe(x, y) {
   tile.style.opacity = "1";
   terrainMap[key] = "caverna";
 }
-function generateTerrainGrid(cols = 32, rows = 32, seed = Date.now()) {
+function generateTerrainGrid(cols = 64, rows = 64, seed = Date.now()) {
   mapCols = cols;
   mapRows = rows;
   const rng = createSeededRNG(seed);
@@ -3040,19 +3134,14 @@ function generateTerrainGrid(cols = 32, rows = 32, seed = Date.now()) {
   if (r < 0.2) terrainType = "snow";
   else if (r < 0.35) terrainType = "desert";
   else if (r < 0.5) terrainType = "island";
-
   const isValid = (x, y) => x >= 0 && x < cols && y >= 0 && y < rows;
   const neighbors = (x, y) => [-1, 0, 1].flatMap(dx =>
     [-1, 0, 1].filter(dy => dx || dy).map(dy => [x + dx, y + dy])
   );
-
-  // terreno base
   for (let x = 0; x < cols; x++)
     for (let y = 0; y < rows; y++)
       terrainMap[`${x}-${y}`] = terrainType === "desert" ? "sand" :
                                 terrainType === "snow" ? "snow" : "grass";
-
-  // bioma ilha
   if (terrainType === "island") {
     const [cx, cy] = [Math.floor(cols / 2), Math.floor(rows / 2)];
     const radius = Math.floor(Math.min(cols, rows) / 3);
@@ -3064,19 +3153,14 @@ function generateTerrainGrid(cols = 32, rows = 32, seed = Date.now()) {
       }
     }
   }
-
-  // Estrutura especial
   function generateSpecialStructureRandom() {
     const margin = 5;
     const cornerX = rng() < 0.5 ? margin : mapCols - margin - 5;
     const cornerY = rng() < 0.5 ? margin : mapRows - margin - 5;
-
     const pillarOffsets = [
       [-2, -1], [-2, 1], [2, -1], [2, 1],
       [-1, -2], [1, -2], [-1, 2], [1, 2]
     ];
-
-    // piso central
     for (let dx = -2; dx <= 2; dx++) {
       for (let dy = -2; dy <= 2; dy++) {
         const x = cornerX + dx;
@@ -3088,8 +3172,6 @@ function generateTerrainGrid(cols = 32, rows = 32, seed = Date.now()) {
         }
       }
     }
-
-    // pilares
     for (const [dx, dy] of pillarOffsets) {
       const x = cornerX + dx;
       const y = cornerY + dy;
@@ -3099,16 +3181,11 @@ function generateTerrainGrid(cols = 32, rows = 32, seed = Date.now()) {
         pilarMap[key] = true;
       }
     }
-
-    // baú central
     const chestKey = `${cornerX}-${cornerY}`;
     terrainMap[chestKey] = "smoothstone";
     bauMap[chestKey] = true;
   }
-
   generateSpecialStructureRandom();
-
-  // geração de água
   const generateWater = (base) => {
     const queue = [], seeds = Math.max(1, Math.floor(targets.water / 45));
     for (let i = 0; i < seeds; i++) {
@@ -3129,7 +3206,6 @@ function generateTerrainGrid(cols = 32, rows = 32, seed = Date.now()) {
       }
     }
   };
-
   if (["default", "snow"].includes(terrainType)) {
     const base = terrainType === "snow" ? "snow" : "grass";
     generateWater(base);
@@ -3147,8 +3223,6 @@ function generateTerrainGrid(cols = 32, rows = 32, seed = Date.now()) {
         }
     }
   }
-
-  // função genérica
   const generateNature = (target, map, exclude, baseChance, decay, avoid = {}, strictSpacing = false) => {
     const queue = [];
     for (let i = 0; i < Math.max(1, Math.floor(target / 10)); i++) {
@@ -3188,28 +3262,20 @@ function generateTerrainGrid(cols = 32, rows = 32, seed = Date.now()) {
       }
     }
   };
-
-  // ajustes
   const adjustedTree = terrainType === "island" ? Math.floor(targets.tree * 0.4) :
                       terrainType === "snow" ? Math.floor(total * 0.25) : targets.tree;
   const adjustedRock = terrainType === "snow" ? Math.floor(total * 0.05) :
                       terrainType === "desert" ? Math.floor(total * 0.5) : targets.rock;
-
-  // mapa de exclusão da estrutura
   const structureMap = { ...pilarMap, ...bauMap, ...pebbleMap };
-
   if (terrainType !== "desert")
     generateNature(adjustedTree, treeMap, ["water", "deepwater", "sand"], 0.7, 0.1, structureMap);
-
   generateNature(adjustedRock, rockMap, ["water", "deepwater", "sand"], 0.6, 0.1, { ...treeMap, ...structureMap });
   generateNature(targets.poppy, poppyMap, ["water", "deepwater", "sand"], 0.5, 0.1, { ...treeMap, ...rockMap, ...structureMap });
   generateNature(targets.largetree, largetreeMap, ["water", "deepwater", "sand"], 0.6, 0.1, { ...treeMap, ...rockMap, ...poppyMap, ...structureMap }, true);
   generateNature(targets.cave, caveMap, ["water", "deepwater", "sand"], 0.8, 0.15, structureMap);
-
   if (terrainType === "desert") {
     generateNature(targets.cactus, cactusMap, ["water", "deepwater"], 0.7, 0.1, structureMap);
   }
-
   generateNature(
     targets.pebble,
     pebbleMap,
@@ -3219,8 +3285,6 @@ function generateTerrainGrid(cols = 32, rows = 32, seed = Date.now()) {
     { ...rockMap, ...structureMap },
     true
   );
-
-  // troncos em pequenas unidades nos biomas default, desert e snow
   if (["default", "desert", "snow"].includes(terrainType)) {
     generateNature(
       targets.tronco,
@@ -3232,7 +3296,6 @@ function generateTerrainGrid(cols = 32, rows = 32, seed = Date.now()) {
       true   // espaçamento estrito
     );
   }
-
   for (let x = 0; x < mapCols; x++) {
     for (let y = 0; y < mapRows; y++) {
       const key = `${x}-${y}`;
@@ -3242,7 +3305,6 @@ function generateTerrainGrid(cols = 32, rows = 32, seed = Date.now()) {
       }
     }
   }
-
   if (["default", "island"].includes(terrainType)) {
     const pathCount = Math.floor(cols / 4);
     for (let p = 0; p < pathCount; p++) {
@@ -3260,8 +3322,6 @@ function generateTerrainGrid(cols = 32, rows = 32, seed = Date.now()) {
       }
     }
   }
-
-  // Loop final para renderizar tudo
   for (let x = 0; x < cols; x++) {
     for (let y = 0; y < rows; y++) {
       const key = `${x}-${y}`;
@@ -3284,19 +3344,14 @@ function generateTerrainGrid(cols = 32, rows = 32, seed = Date.now()) {
     }
   }
 }
-
 function generateSpecialStructureRandom() {
   const margin = 5;
-  // escolhe canto aleatório
   const cornerX = rng() < 0.5 ? margin : mapCols - margin - 5;
   const cornerY = rng() < 0.5 ? margin : mapRows - margin - 5;
-
   const pillarOffsets = [
     [-2, -1], [-2, 1], [2, -1], [2, 1],
     [-1, -2], [1, -2], [-1, 2], [1, 2]
   ];
-
-  // piso central + pedrinhas
   for (let dx = -2; dx <= 2; dx++) {
     for (let dy = -2; dy <= 2; dy++) {
       const x = cornerX + dx;
@@ -3308,8 +3363,6 @@ function generateSpecialStructureRandom() {
       }
     }
   }
-
-  // pilares
   for (const [dx, dy] of pillarOffsets) {
     const x = cornerX + dx;
     const y = cornerY + dy;
@@ -3319,13 +3372,10 @@ function generateSpecialStructureRandom() {
       pilarMap[key] = true;
     }
   }
-
-  // baú central
   const chestKey = `${cornerX}-${cornerY}`;
   terrainMap[chestKey] = "smoothstone";
   bauMap[chestKey] = true;
 }
-
 function generateSecondFloor() {
   const MIN_DIST = 3;     
   const CLUSTER_RATIO = 0.20; 
@@ -3424,4 +3474,3 @@ function placeSmooth(x, y) {
 </script>
 </body>
 </html>
-
